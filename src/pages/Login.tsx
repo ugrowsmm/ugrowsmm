@@ -44,6 +44,7 @@ const ERRORS: Record<string, string> = {
   code_invalid: 'That code is wrong or has expired. Request a new one.',
   rate_limited: 'Too many tries or emails sent. Please wait a few minutes and try again.',
   network: 'Network problem. Check your connection and try again.',
+  email_send: 'We could not send the verification email. The email (SMTP) settings in Supabase need fixing.',
 }
 type AuthErr = { message?: string; code?: string; status?: number }
 /** Maps Supabase auth errors to one of the keys above (or 'not_verified'). */
@@ -57,10 +58,13 @@ const authKey = (e: AuthErr): string => {
   if (m.includes('email address') && m.includes('invalid')) return 'invalid_email'
   if (c === 'otp_expired' || m.includes('expired') || m.includes('invalid')) return 'code_invalid'
   if (c.includes('rate_limit') || m.includes('rate limit') || m.includes('too many') || e.status === 429) return 'rate_limited'
+  if (m.includes('sending') && m.includes('email')) return 'email_send'
   if (m.includes('fetch') || m.includes('network')) return 'network'
-  return 'unknown'
+  console.error('Auth error:', e)
+  return 'unknown:' + (e.message ?? '') + (e.code ? ' [' + e.code + ']' : '')
 }
-const errText = (e?: string) => (e && ERRORS[e]) || 'Something went wrong. Please try again.'
+const errText = (e?: string) =>
+  (e && ERRORS[e]) || (e?.startsWith('unknown:') && e.length > 8 ? 'Error: ' + e.slice(8) : 'Something went wrong. Please try again.')
 const maskEmail = (e: string) => e.replace(/^(.).*(@.*)$/, (_m, a, b) => a + '•••' + b)
 
 export default function Login() {

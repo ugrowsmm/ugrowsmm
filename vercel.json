@@ -35,7 +35,7 @@
       "continue": true
     },
     {
-      "src": "/(?!robots\\.txt$|blocked\\.html$)(.*)",
+      "src": "/(?!robots\\.txt$|blocked\\.html$|icons/)(.*)",
       "has": [
         {
           "type": "header",

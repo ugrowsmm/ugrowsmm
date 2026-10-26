@@ -6367,7 +6367,9 @@ html{scrollbar-gutter:stable}
 /* ============================================================
    Landing: trust bar, hero background, chips, numbers strip
    ============================================================ */
-.mkt-trustbar{display:flex;justify-content:center;align-items:center;gap:11px;padding:10px 16px;font-size:13.5px;font-weight:800;letter-spacing:-.005em;color:var(--ink-strong);background:linear-gradient(90deg,rgba(249,115,22,.1),rgba(255,255,255,.6) 50%,rgba(56,189,248,.12));border-bottom:1px solid var(--line)}
+.mkt-trustbar{width:100%;max-width:1180px;margin:0 auto;padding:22px clamp(18px,4vw,40px) 0}
+.mkt-trust-pill{display:inline-flex;align-items:center;gap:9px;height:36px;padding:0 15px 0 13px;border-radius:999px;background:#fff;border:1px solid var(--line-strong);box-shadow:0 1px 2px rgba(16,24,40,.05),0 10px 22px -16px rgba(16,24,40,.35);font-size:13px;font-weight:700;letter-spacing:-.005em;color:var(--ink-strong)}
+.trust-dot{display:inline-block;width:9px;height:9px;flex:none;border-radius:50%;background:#16a34a;box-shadow:0 0 0 3px rgba(22,163,74,.18)}
 .live-dot{position:relative;display:inline-block;width:9px;height:9px;flex:none;border-radius:50%;background:#16a34a;animation:liveBlink 1.3s ease-in-out infinite}
 .live-dot::after{content:'';position:absolute;inset:0;border-radius:50%;background:#16a34a;animation:livePing 1.6s cubic-bezier(0,0,.2,1) infinite}
 @keyframes liveBlink{50%{opacity:.4}}
@@ -6376,7 +6378,7 @@ html{scrollbar-gutter:stable}
 .mkt-hero-wrap{position:relative;isolation:isolate;overflow:hidden;padding-bottom:clamp(30px,4vw,52px)}
 .mkt-hero-wrap::before{content:'';position:absolute;inset:0;z-index:-2;background:radial-gradient(55% 70% at 88% 6%,rgba(56,189,248,.2),transparent 62%),radial-gradient(48% 60% at 4% 92%,rgba(249,115,22,.18),transparent 64%),linear-gradient(#ffffff,#fffaf5)}
 .mkt-hero-wrap::after{content:'';position:absolute;inset:0;z-index:-1;background-image:radial-gradient(rgba(15,23,42,.1) 1px,transparent 1.3px);background-size:22px 22px;-webkit-mask-image:radial-gradient(75% 80% at 50% 35%,#000,transparent 78%);mask-image:radial-gradient(75% 80% at 50% 35%,#000,transparent 78%)}
-.mkt-hero-wrap .mkt-hero{padding-bottom:clamp(26px,3vw,40px)}
+.mkt-hero-wrap .mkt-hero{padding-top:clamp(26px,3.5vw,44px);padding-bottom:clamp(26px,3vw,40px)}
 .mkt-hero-copy h1{margin-top:0}
 .mkt-hero-copy > p b{color:var(--ink-strong)}
 
@@ -6402,7 +6404,8 @@ html{scrollbar-gutter:stable}
   .mkt-num:nth-child(n+3){border-top:1px solid var(--line)}
 }
 @media (max-width:760px){
-  .mkt-trustbar{font-size:12.5px;padding:9px 12px}
+  .mkt-trustbar{padding-top:16px}
+  .mkt-trust-pill{height:32px;font-size:12px}
   .mkt-chips li{height:32px;padding:0 11px;font-size:11.5px}
   .mkt-num{padding:20px 8px 18px}
   .mkt-num-ico{width:42px;height:42px}

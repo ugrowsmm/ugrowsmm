@@ -115,7 +115,7 @@ function Sheet({ service, onClose }: { service: Service; onClose: () => void }) 
       <button type="button" className="om-x" onClick={onClose} aria-label="Close"><X size={16} /></button>
 
       {/* left: the product */}
-      <section className="om-info">
+      <section className="om-info om-top">
         <div className="om-hero">
           <span className={`platform-tile ${service.platform} om-tile`}><PlatformIcon platform={service.platform} size={26} /></span>
           <div className="om-hero-txt">
@@ -145,25 +145,6 @@ function Sheet({ service, onClose }: { service: Service; onClose: () => void }) 
           <div className="om-spec"><Users size={16} /><div><span>Maximum order</span><b>{n(service.max)}</b></div></div>
           <div className="om-spec"><Link2 size={16} /><div><span>Link needed</span><b>{guide.need}</b></div></div>
           <div className="om-spec"><Droplets size={16} /><div><span>Drip-feed</span><b>Available</b></div></div>
-        </div>
-
-        <div className="om-block">
-          <div className="om-block-h"><ShieldCheck size={15} /> Refill status</div>
-          <p>{refill.detail}</p>
-        </div>
-
-        <div className="om-block">
-          <div className="om-block-h">Included with {service.quality} grade</div>
-          <ul className="om-list">
-            {tier.perks.map((p) => (<li key={p}><Check size={14} /> {p}</li>))}
-          </ul>
-        </div>
-
-        <div className="om-block om-tips">
-          <div className="om-block-h"><Info size={15} /> Good to know</div>
-          <ul className="om-list dot">
-            {tips.map((t) => (<li key={t}>{t}</li>))}
-          </ul>
         </div>
       </section>
 
@@ -275,6 +256,28 @@ function Sheet({ service, onClose }: { service: Service; onClose: () => void }) 
           <button type="submit" className="btn btn-primary" disabled={insufficient || placing}>
             <ShoppingBag /> {placing ? 'Placing…' : 'Place order'}
           </button>
+        </div>
+      </section>
+
+      {/* more details: after the form on phones, under the product on desktop */}
+      <section className="om-info om-more">
+        <div className="om-block">
+          <div className="om-block-h"><ShieldCheck size={15} /> Refill status</div>
+          <p>{refill.detail}</p>
+        </div>
+
+        <div className="om-block">
+          <div className="om-block-h">Included with {service.quality} grade</div>
+          <ul className="om-list">
+            {tier.perks.map((p) => (<li key={p}><Check size={14} /> {p}</li>))}
+          </ul>
+        </div>
+
+        <div className="om-block om-tips">
+          <div className="om-block-h"><Info size={15} /> Good to know</div>
+          <ul className="om-list dot">
+            {tips.map((t) => (<li key={t}>{t}</li>))}
+          </ul>
         </div>
       </section>
     </form>

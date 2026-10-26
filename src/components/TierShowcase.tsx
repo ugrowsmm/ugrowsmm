@@ -16,7 +16,7 @@ import { useStore } from '../lib/store'
 const CLS: Record<Quality, string> = { Standard: 'std', Premium: 'pre', Pro: 'pro' }
 
 /**
- * The three service grades for the landing page. Starting price, service count and platforms are all
+ * The three service grades for the landing page. Starting prices, service count and platforms are all
  * calculated from SERVICES, so adding or removing a service updates this section on its own.
  * A grade with no services is hidden.
  */

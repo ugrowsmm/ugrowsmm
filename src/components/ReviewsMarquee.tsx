@@ -9,7 +9,7 @@ function Card({ r }: { r: Review }) {
     <article className="rv-card">
       <div className="between">
         <span className={`rv-badge ${SAMPLE_REVIEWS ? 'sample' : ''}`}>
-          <BadgeCheck size={12} /> {SAMPLE_REVIEWS ? 'Sample review' : 'Verified review'}
+          <BadgeCheck size={12} /> {SAMPLE_REVIEWS ? 'Sample review' : 'User Review'}
         </span>
         <span className="rv-when">{r.when}</span>
       </div>
@@ -21,7 +21,6 @@ function Card({ r }: { r: Review }) {
         <span className="rv-av">{initials(r.name)}</span>
         <div>
           <b>{r.name} <i className="rv-dot" /></b>
-          <span>{r.role}</span>
         </div>
       </div>
     </article>

@@ -53,12 +53,14 @@ export function Modal({
   children,
   labelledBy,
   width = 460,
+  className = '',
 }: {
   open: boolean
   onClose: () => void
   children: ReactNode
   labelledBy?: string
   width?: number
+  className?: string
 }) {
   const dialogRef = useRef<HTMLDivElement>(null)
   const closeRef = useRef(onClose)
@@ -132,7 +134,7 @@ export function Modal({
     >
       <div
         ref={dialogRef}
-        className="modal"
+        className={`modal ${className}`.trim()}
         role="dialog"
         aria-modal="true"
         aria-labelledby={labelledBy}

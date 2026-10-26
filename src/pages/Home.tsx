@@ -454,17 +454,6 @@ export default function Home() {
           </div>
         </section>
 
-        <section className="mkt-section">
-          <div className="mkt-head">
-            <div>
-              <span className="eyebrow">Loved by creators</span>
-              <h2>Don’t take our word for it.</h2>
-            </div>
-          </div>
-
-          <ReviewsMarquee />
-        </section>
-
         <section className="mkt-final">
           <div className="mkt-final-inner">
             <span className="eyebrow">
@@ -538,6 +527,17 @@ export default function Home() {
               )
             })}
           </div>
+        </section>
+
+        <section className="mkt-section">
+          <div className="mkt-head">
+            <div>
+              <span className="eyebrow">Loved by creators</span>
+              <h2>Don’t take our word for it.</h2>
+            </div>
+          </div>
+
+          <ReviewsMarquee />
         </section>
       </main>
 

@@ -7,6 +7,7 @@ import {
   SERVICES,
   TIERS,
   TIER_ORDER,
+  formatFrom,
   formatINR,
   type Platform,
   type Quality,
@@ -133,7 +134,7 @@ export default function ServiceCatalog({ variant }: { variant: 'services' | 'ord
               <span className="cg-tab-ic"><Icon fill={t === 'Standard' ? 'none' : 'currentColor'} aria-hidden="true" /></span>
               <span className="cg-tab-name">{t}</span>
               <span className="cg-tab-grade">{TIERS[t].grade}</span>
-              <span className="cg-tab-from">from {formatINR(from, 0)}<small>/1k</small></span>
+              <span className="cg-tab-from">from {formatFrom(from)}<small>/1k</small></span>
               <span className="cg-tab-count">{searching ? `${shown} match${shown === 1 ? '' : 'es'}` : `${total} services`}</span>
               <span className="cg-tab-check" aria-hidden="true"><Check size={13} /></span>
             </button>

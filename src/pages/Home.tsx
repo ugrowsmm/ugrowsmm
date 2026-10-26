@@ -139,7 +139,7 @@ export default function Home() {
               <span className="mkt-h1-grad">faster, cheaper &amp; safer.</span>
             </h1>
             <p>
-              Followers, likes, views and plays for Instagram, YouTube, Telegram and more. Pay in
+              Followers, likes, views and plays for Instagram, YouTube, Telegram, Snapchat and more. Pay in
               INR with UPI, with prices starting at just <b>{PRICE_FROM_LABEL}</b>.
             </p>
 

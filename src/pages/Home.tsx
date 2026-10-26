@@ -455,27 +455,6 @@ export default function Home() {
         </section>
 
         <section className="mkt-section">
-          <div className="mkt-stats">
-            <div>
-              <b>{SERVICES.length}</b>
-              <span>Services across {PLATFORMS.length} platforms</span>
-            </div>
-            <div>
-              <b>{USERS_LABEL}</b>
-              <span>Creators & agencies onboard</span>
-            </div>
-            <div>
-              <b>Minutes</b>
-              <span>Typical delivery start</span>
-            </div>
-            <div>
-              <b>30 days</b>
-              <span>Refill protection</span>
-            </div>
-          </div>
-        </section>
-
-        <section className="mkt-section">
           <div className="mkt-head">
             <div>
               <span className="eyebrow">Loved by creators</span>

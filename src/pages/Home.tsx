@@ -174,12 +174,13 @@ export default function Home() {
       </header>
 
       <main>
-        <div className="mkt-trustbar" role="status">
-          <span className="live-dot" aria-hidden="true" />
-          <span>Most trusted since {SINCE_YEAR}</span>
-        </div>
-
         <div className="mkt-hero-wrap">
+        <div className="mkt-trustbar">
+          <span className="mkt-trust-pill">
+            <span className="trust-dot" aria-hidden="true" />
+            Most trusted since {SINCE_YEAR}
+          </span>
+        </div>
         <section className="mkt-hero">
           <div className="mkt-hero-copy">
             <h1>

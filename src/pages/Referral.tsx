@@ -51,7 +51,7 @@ export default function Referral() {
         </button>
       </div>
 
-      <BonusBanner note="Tell your audience: use my code and get 50,000 free Instagram views on the first ₹100 top-up. You earn your referral percentage on every top-up they make." />
+      <BonusBanner variant="creator" note="Tell your audience: use my code and get 50,000 free Instagram views on the first ₹100 top-up. You earn your referral percentage on every top-up they make." />
 
       <div className="stats" style={{ marginTop: 16 }}>
         <div className="stat"><div className="stat-top">Total earned <span className="icon"><Gift /></span></div><div className="stat-value">{formatINR(referral.earned)}</div></div>

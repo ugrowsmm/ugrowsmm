@@ -7,4 +7,8 @@ export const UPI_NAME = 'UGrowSMM'
 export const TURNSTILE_KEY = import.meta.env.VITE_TURNSTILE_KEY ?? ''
 
 // Marketing numbers shown on the public pages. Keep these true; update them as you grow.
-export const USERS_LABEL = '50+'
+export const USERS_LABEL = '50K+'
+export const SINCE_YEAR = 2019
+export const ORDERS_LABEL = '1 Million+'
+export const ORDER_EVERY_LABEL = '0.3s'
+export const PRICE_FROM_LABEL = '₹1/1K'

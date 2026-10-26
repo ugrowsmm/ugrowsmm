@@ -332,6 +332,13 @@ export default function Home() {
           </div>
         </div>
 
+        <section className="mkt-section" aria-label="Referral bonus">
+          <BonusBanner
+            cta
+            footnote={`Creators and resellers earn ${REFERRAL_PERCENT_DEFAULT}% of every top-up made by people who join with their code.`}
+          />
+        </section>
+
         <section className="mkt-section" id="features">
           <div className="mkt-head">
             <div>
@@ -518,13 +525,6 @@ export default function Home() {
               )
             })}
           </div>
-        </section>
-
-        <section className="mkt-section" aria-label="Referral bonus">
-          <BonusBanner
-            cta
-            footnote={`Creators and resellers earn ${REFERRAL_PERCENT_DEFAULT}% of every top-up made by people who join with their code.`}
-          />
         </section>
 
         <section className="mkt-final">

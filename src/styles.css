@@ -6473,3 +6473,43 @@ html{scrollbar-gutter:stable}
   .mkt-perks b{font-size:13.5px}
   .mkt-hero-copy .mkt-cta-row{margin-top:22px}
 }
+
+/* Landing: the three service grades */
+.ts-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(260px,1fr));gap:18px;align-items:stretch}
+.ts-card{--tier:#98a2b3;position:relative;display:flex;flex-direction:column;align-items:flex-start;gap:4px;min-width:0;padding:26px 24px 22px;border-radius:24px;border:1.5px solid var(--line);background:#fff;color:var(--ink);text-decoration:none;overflow:hidden;box-shadow:var(--shadow-card);transition:transform .28s var(--ease),border-color .28s var(--ease),box-shadow .28s var(--ease)}
+.ts-card.pre{--tier:#f97316;border-color:color-mix(in srgb,var(--tier) 55%,transparent);background:linear-gradient(180deg,color-mix(in srgb,var(--tier) 10%,#fff),#fff 62%);box-shadow:0 0 0 4px color-mix(in srgb,var(--tier) 14%,transparent),var(--shadow-card)}
+.ts-card.pro{--tier:#f59e0b;background:linear-gradient(180deg,#fffbeb,#fff 58%)}
+.ts-card::before{content:'';position:absolute;inset:0 0 auto;height:4px;background:var(--tier);opacity:.7}
+.ts-card:hover{transform:translateY(-4px);border-color:var(--tier);box-shadow:0 22px 44px -28px color-mix(in srgb,var(--tier) 70%,transparent),var(--shadow-card)}
+.ts-flag{position:absolute;top:18px;right:18px;display:inline-flex;align-items:center;height:26px;padding:0 12px;border-radius:999px;background:var(--tier);color:#fff;font-size:11.5px;font-weight:800;letter-spacing:.01em}
+.ts-ic{display:grid;place-items:center;width:48px;height:48px;margin-bottom:10px;border-radius:15px;color:var(--tier);background:color-mix(in srgb,var(--tier) 14%,#fff);border:1px solid color-mix(in srgb,var(--tier) 35%,transparent)}
+.ts-ic svg{width:25px;height:25px}
+.ts-card.pro .ts-ic{background:linear-gradient(135deg,#fde68a,#fbbf24 60%,#f59e0b);color:#4a2c00;border-color:rgba(180,120,0,.4)}
+.ts-name{font-family:var(--font-display);font-size:28px;font-weight:800;letter-spacing:-.045em;line-height:1.1;color:var(--ink-strong)}
+.ts-grade{font-size:13.5px;font-weight:800;color:var(--tier)}
+.ts-card.std .ts-grade{color:#667085}
+.ts-headline{margin:12px 0 0;font-size:14.5px;font-weight:700;line-height:1.45;color:var(--ink)}
+.ts-perks{list-style:none;margin:14px 0 0;padding:0;display:grid;gap:9px;font-size:13.5px;font-weight:600;color:var(--muted)}
+.ts-perks li{display:flex;align-items:center;gap:9px}
+.ts-perks svg{flex:none;color:var(--tier)}
+.ts-price{width:100%;margin-top:auto;padding-top:18px;display:flex;flex-direction:column;gap:2px}
+.ts-card .ts-perks{margin-bottom:20px}
+.ts-from-label{font-size:12px;font-weight:700;color:var(--faint)}
+.ts-from{font-family:var(--font-display);font-size:30px;font-weight:800;letter-spacing:-.045em;line-height:1.15;color:var(--ink-strong)}
+.ts-from small{margin-left:3px;font-family:var(--font-body);font-size:13px;font-weight:700;letter-spacing:0;color:var(--faint)}
+.ts-meta{display:flex;align-items:center;justify-content:space-between;gap:10px;flex-wrap:wrap;margin-top:6px;font-size:13px;font-weight:700;color:var(--muted)}
+.ts-plats{display:flex}
+.ts-plats i{display:grid;place-items:center;width:26px;height:26px;margin-left:-6px;border-radius:50%;background:#f2f4f7;border:2px solid #fff;color:#475467}
+.ts-plats i:first-child{margin-left:0}
+.ts-cta{display:inline-flex;align-items:center;justify-content:center;gap:8px;width:100%;height:46px;margin-top:18px;border-radius:14px;font-size:14px;font-weight:800;color:var(--tier);background:color-mix(in srgb,var(--tier) 10%,#fff);border:1px solid color-mix(in srgb,var(--tier) 30%,transparent);transition:background .25s,color .25s,transform .25s var(--ease)}
+.ts-card.std .ts-cta{color:#475467}
+.ts-card:hover .ts-cta{background:var(--tier);color:#fff}
+.ts-card.pro:hover .ts-cta{color:#4a2c00}
+.ts-card:hover .ts-cta svg{transform:translateX(3px)}
+.ts-cta svg{transition:transform .25s var(--ease)}
+@media (max-width:760px){
+  .ts-grid{gap:14px}
+  .ts-card{padding:22px 18px 18px;border-radius:20px}
+  .ts-name{font-size:25px}
+  .ts-from{font-size:27px}
+}

@@ -6273,3 +6273,39 @@ html,body{max-width:100%;overflow-x:clip}
 .trust-strip>*,.mkt-footer-grid>*,.bottom-nav-inner>*,.order-layout>*,.service-grid>*,.cg-tabs>*{min-width:0;max-width:100%}
 .page img,.page video,.page canvas{max-width:100%;height:auto}
 .page .table-wrap,.page .adm-tabs{max-width:100%}
+
+/* ============================================================
+   Promo banner (BonusBanner): Home, Referral, Add funds
+   ============================================================ */
+.bb{position:relative;overflow:hidden;isolation:isolate;display:grid;grid-template-columns:minmax(0,1fr) auto;align-items:center;gap:20px 30px;padding:28px 32px;border-radius:26px;color:#fff;border:1px solid rgba(255,255,255,.08);background:radial-gradient(rgba(255,255,255,.075) 1px,transparent 1.6px) 0 0/18px 18px,linear-gradient(135deg,#0f172a 0%,#1c1236 52%,#3a1409 100%);box-shadow:0 34px 64px -36px rgba(194,65,12,.7)}
+.bb::before{content:'';position:absolute;z-index:-1;right:-90px;top:-130px;width:420px;height:420px;border-radius:50%;background:radial-gradient(circle,rgba(249,115,22,.6),transparent 66%)}
+.bb::after{content:'';position:absolute;z-index:-1;left:-70px;bottom:-150px;width:340px;height:340px;border-radius:50%;background:radial-gradient(circle,rgba(56,189,248,.28),transparent 66%)}
+.bb-main{min-width:0}
+.bb-pill{display:inline-flex;align-items:center;gap:7px;height:28px;padding:0 13px;border-radius:999px;background:rgba(255,255,255,.1);border:1px solid rgba(255,255,255,.18);font-size:11px;font-weight:800;letter-spacing:.14em;text-transform:uppercase;color:#fed7aa}
+.bb-pill svg{color:#fb923c}
+.bb-title{margin:16px 0 0;font-family:var(--font-display);font-weight:800;letter-spacing:-.05em;line-height:1.02;font-size:clamp(34px,5.4vw,58px);color:#fff;display:flex;flex-wrap:wrap;align-items:center;gap:6px 12px}
+.bb-num{background:linear-gradient(100deg,#fed7aa,#fb923c 45%,#fbbf24);-webkit-background-clip:text;background-clip:text;color:transparent}
+.bb-free{display:inline-block;padding:3px 13px 5px;border-radius:12px;background:#fbbf24;color:#3a1409;font-size:.5em;letter-spacing:.02em;transform:rotate(-3deg);box-shadow:0 10px 24px -10px rgba(251,191,36,.9)}
+.bb-what{flex-basis:100%;font-size:.52em;font-weight:700;letter-spacing:-.02em;color:#fff}
+.bb-text{margin:14px 0 0;max-width:58ch;font-size:14px;line-height:1.7;color:rgba(255,255,255,.84)}
+.bb-chips{list-style:none;margin:16px 0 0;padding:0;display:flex;flex-wrap:wrap;gap:8px}
+.bb-chips li{display:inline-flex;align-items:center;gap:7px;height:32px;padding:0 13px;border-radius:999px;background:rgba(255,255,255,.08);border:1px solid rgba(255,255,255,.14);font-size:12px;font-weight:700;color:#fff}
+.bb-chips svg{color:#fbbf24;flex:none}
+.bb-cta{display:inline-flex;align-items:center;justify-content:center;gap:9px;height:52px;padding:0 28px;margin-top:20px;border-radius:15px;background:#fff;color:#7c2d12;font-weight:800;font-size:15px;box-shadow:0 18px 34px -16px rgba(251,146,60,.9);transition:transform .25s var(--ease),box-shadow .25s var(--ease)}
+.bb-cta:hover{transform:translateY(-2px);box-shadow:0 22px 40px -16px rgba(251,146,60,1)}
+.bb-art{position:relative;width:220px;height:190px;display:grid;place-items:center;flex:none}
+.bb-card{display:grid;place-items:center;width:132px;height:132px;border-radius:36px;color:#fff;background:linear-gradient(140deg,#fb923c,#ea580c 60%,#c2410c);border:1px solid rgba(255,255,255,.3);box-shadow:0 30px 50px -22px rgba(249,115,22,.95),inset 0 2px 0 rgba(255,255,255,.35);transform:rotate(-6deg)}
+.bb-float{position:absolute;display:inline-flex;align-items:center;gap:6px;height:32px;padding:0 13px;border-radius:999px;font-size:12px;font-weight:800;color:#fff;background:rgba(255,255,255,.14);border:1px solid rgba(255,255,255,.28);backdrop-filter:blur(6px);animation:bbFloat 5s ease-in-out infinite alternate}
+.bb-float.f1{top:6px;left:-6px;color:#fda4af}
+.bb-float.f2{bottom:14px;left:-18px;animation-delay:-1.6s;color:#bae6fd}
+.bb-float.f3{top:30px;right:-10px;animation-delay:-3s;background:#fbbf24;border-color:transparent;color:#3a1409}
+@keyframes bbFloat{from{transform:translateY(-5px)}to{transform:translateY(6px)}}
+
+@media (max-width:760px){
+  .bb{grid-template-columns:minmax(0,1fr);padding:22px 18px 20px;border-radius:22px}
+  .bb-art{display:none}
+  .bb-title{margin-top:14px}
+  .bb-chips li{height:30px;font-size:11.5px}
+  .bb-cta{display:flex;width:100%}
+}
+@media (prefers-reduced-motion:reduce){.bb-float{animation:none}}

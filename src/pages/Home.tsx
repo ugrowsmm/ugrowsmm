@@ -1,11 +1,10 @@
-import TierBadge from '../components/TierBadge'
+import TierShowcase from '../components/TierShowcase'
 import ReviewsMarquee from '../components/ReviewsMarquee'
 import BonusBanner from '../components/BonusBanner'
 import { useEffect, useState } from 'react'
 import { Link } from 'react-router-dom'
 import {
   ArrowRight,
-  ArrowUpRight,
   BadgeCheck,
   Check,
   ChevronDown,
@@ -24,7 +23,6 @@ import {
   SERVICES,
   formatINR,
   type Platform,
-  type Service,
 } from '../lib/data'
 import { PlatformIcon } from '../components/PlatformIcon'
 import { LogoGlyph, Wordmark } from '../components/Logo'
@@ -39,14 +37,6 @@ import {
   SINCE_YEAR,
   USERS_LABEL,
 } from '../lib/config'
-
-const SHOWCASE_IDS = [
-  'ig-followers',
-  'ig-likes',
-  'yt-views',
-  'tg-members',
-  'sp-plays',
-]
 
 const PLATFORMS: Platform[] = [
   'instagram',
@@ -86,42 +76,6 @@ const FAQS = [
   },
 ]
 
-function ServiceCard({ service }: { service: Service }) {
-  return (
-    <Link to="/login" className="service-card" style={{ display: 'flex' }}>
-      <div className="top">
-        <span className={`platform-tile ${service.platform}`}>
-          <PlatformIcon platform={service.platform} />
-        </span>
-        <div className="row" style={{ gap: 6 }}>
-          {service.badge ? <span className="badge badge-lime">{service.badge}</span> : null}
-          <TierBadge quality={service.quality} />
-        </div>
-      </div>
-      <div>
-        <div className="tiny faint" style={{ fontWeight: 700, letterSpacing: '0.08em' }}>
-          {PLATFORM_LABEL[service.platform].toUpperCase()} · {service.category.toUpperCase()}
-        </div>
-        <div className="name">{service.name}</div>
-        <div className="cat">{service.description}</div>
-      </div>
-      <div className="service-meta-row">
-        <span>Min {service.min.toLocaleString('en-IN')}</span>
-        <span>·</span>
-        <span>{service.avgTime}</span>
-      </div>
-      <div className="bottom">
-        <div className="rate">
-          {formatINR(service.rate, 0)} <span>/ 1k</span>
-        </div>
-        <span className="badge badge-violet">
-          Order <ArrowUpRight />
-        </span>
-      </div>
-    </Link>
-  )
-}
-
 export default function Home() {
   const { state } = useStore()
   const [openFaq, setOpenFaq] = useState<number | null>(0)
@@ -130,10 +84,6 @@ export default function Home() {
   useEffect(() => {
     document.title = 'UGrowSMM — Premium SMM Panel'
   }, [])
-
-  const showcase = SHOWCASE_IDS.map((id) => SERVICES.find((s) => s.id === id)).filter(
-    (s): s is Service => Boolean(s),
-  )
 
   return (
     <div className="mkt-shell">
@@ -409,17 +359,20 @@ export default function Home() {
           <div className="mkt-head">
             <div>
               <span className="eyebrow">The catalogue</span>
-              <h2>{SERVICES.length} ways to grow.</h2>
+              <h2>Pick your growth grade.</h2>
             </div>
+            <p className="mkt-head-note">
+              {SERVICES.length} services across {new Set(SERVICES.map((s) => s.platform)).size} platforms,
+              in three simple grades.
+            </p>
+          </div>
+
+          <TierShowcase />
+
+          <div style={{ marginTop: 18, textAlign: 'center' }}>
             <Link to={state.signedIn ? '/services' : '/login'} className="btn btn-ghost btn-sm">
               View full catalogue <ArrowRight />
             </Link>
-          </div>
-
-          <div className="service-grid">
-            {showcase.map((service) => (
-              <ServiceCard key={service.id} service={service} />
-            ))}
           </div>
         </section>
 

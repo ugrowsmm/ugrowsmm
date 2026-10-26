@@ -465,6 +465,40 @@ export default function Home() {
           <ReviewsMarquee />
         </section>
 
+        <section className="mkt-final">
+          <div className="mkt-final-inner">
+            <span className="eyebrow">
+              <Sparkles size={12} /> Ready when you are
+            </span>
+            <h2>
+              Make your next campaign
+              <br />
+              <span className="grad-text">impossible</span> <span className="grad-cool">to ignore.</span>
+            </h2>
+            <p>
+              Create your free account, top up your wallet with UPI and place your first order in
+              minutes. We never ask for your social media passwords.
+            </p>
+            <div className="mkt-final-actions">
+              <Link to={panelHref} className="btn btn-lime btn-lg">
+                <Sparkles /> Open the UGrowSMM panel
+              </Link>
+              <InstallButton />
+            </div>
+            <div className="mkt-final-meta">
+              <span>
+                <Check /> Secure UPI payments
+              </span>
+              <span>
+                <Check /> 30-day refill protection
+              </span>
+              <span>
+                <Check /> Instant UPI top-up
+              </span>
+            </div>
+          </div>
+        </section>
+
         <section className="mkt-section" id="faq">
           <div className="mkt-head">
             <div>
@@ -503,40 +537,6 @@ export default function Home() {
                 </div>
               )
             })}
-          </div>
-        </section>
-
-        <section className="mkt-final">
-          <div className="mkt-final-inner">
-            <span className="eyebrow">
-              <Sparkles size={12} /> Ready when you are
-            </span>
-            <h2>
-              Make your next campaign
-              <br />
-              <span className="grad-text">impossible</span> <span className="grad-cool">to ignore.</span>
-            </h2>
-            <p>
-              Create your free account, top up your wallet with UPI and place your first order in
-              minutes. We never ask for your social media passwords.
-            </p>
-            <div className="mkt-final-actions">
-              <Link to={panelHref} className="btn btn-lime btn-lg">
-                <Sparkles /> Open the UGrowSMM panel
-              </Link>
-              <InstallButton />
-            </div>
-            <div className="mkt-final-meta">
-              <span>
-                <Check /> Secure UPI payments
-              </span>
-              <span>
-                <Check /> 30-day refill protection
-              </span>
-              <span>
-                <Check /> Instant UPI top-up
-              </span>
-            </div>
           </div>
         </section>
       </main>

@@ -505,7 +505,7 @@ export default function Home() {
               <span className="eyebrow">Good to know</span>
               <h2>Questions, answered.</h2>
             </div>
-            <p>
+            <p className="mkt-head-note">
               Everything you need before your first order. Still unsure? The support team answers
               within one business day.
             </p>

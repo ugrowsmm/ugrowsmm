@@ -6363,3 +6363,55 @@ html{scrollbar-gutter:stable}
 .modal,.drawer,.popover{overscroll-behavior:contain}
 /* Pause decorative loops while they are off screen (set by ReviewsMarquee). */
 .rv-track.paused{animation-play-state:paused}
+
+/* ============================================================
+   Landing: trust bar, hero background, chips, numbers strip
+   ============================================================ */
+.mkt-trustbar{display:flex;justify-content:center;align-items:center;gap:11px;padding:10px 16px;font-size:13.5px;font-weight:800;letter-spacing:-.005em;color:var(--ink-strong);background:linear-gradient(90deg,rgba(249,115,22,.1),rgba(255,255,255,.6) 50%,rgba(56,189,248,.12));border-bottom:1px solid var(--line)}
+.live-dot{position:relative;display:inline-block;width:9px;height:9px;flex:none;border-radius:50%;background:#16a34a;animation:liveBlink 1.3s ease-in-out infinite}
+.live-dot::after{content:'';position:absolute;inset:0;border-radius:50%;background:#16a34a;animation:livePing 1.6s cubic-bezier(0,0,.2,1) infinite}
+@keyframes liveBlink{50%{opacity:.4}}
+@keyframes livePing{0%{transform:scale(1);opacity:.65}100%{transform:scale(3.2);opacity:0}}
+
+.mkt-hero-wrap{position:relative;isolation:isolate;overflow:hidden;padding-bottom:clamp(30px,4vw,52px)}
+.mkt-hero-wrap::before{content:'';position:absolute;inset:0;z-index:-2;background:radial-gradient(55% 70% at 88% 6%,rgba(56,189,248,.2),transparent 62%),radial-gradient(48% 60% at 4% 92%,rgba(249,115,22,.18),transparent 64%),linear-gradient(#ffffff,#fffaf5)}
+.mkt-hero-wrap::after{content:'';position:absolute;inset:0;z-index:-1;background-image:radial-gradient(rgba(15,23,42,.1) 1px,transparent 1.3px);background-size:22px 22px;-webkit-mask-image:radial-gradient(75% 80% at 50% 35%,#000,transparent 78%);mask-image:radial-gradient(75% 80% at 50% 35%,#000,transparent 78%)}
+.mkt-hero-wrap .mkt-hero{padding-bottom:clamp(26px,3vw,40px)}
+.mkt-hero-copy h1{margin-top:0}
+.mkt-hero-copy > p b{color:var(--ink-strong)}
+
+.mkt-chips{list-style:none;margin:22px 0 0;padding:0;display:flex;flex-wrap:wrap;gap:8px}
+.mkt-chips li{display:inline-flex;align-items:center;gap:7px;height:36px;padding:0 14px;border-radius:999px;background:#fff;border:1px solid var(--line);box-shadow:0 1px 2px rgba(16,24,40,.04);font-size:12.5px;font-weight:700;color:var(--ink)}
+.mkt-chips svg{width:14px;height:14px;flex:none;color:var(--orange)}
+
+.mkt-float-top{left:auto;bottom:auto;right:-8px;top:-14px}
+.mkt-float-top .live-dot{margin:0 4px}
+
+.mkt-numbers{width:100%;max-width:1180px;margin:0 auto;padding:0 clamp(18px,4vw,40px)}
+.mkt-numbers-grid{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));border-radius:24px;background:rgba(255,255,255,.92);border:1px solid var(--line);box-shadow:var(--shadow-lg);overflow:hidden}
+.mkt-num{display:flex;flex-direction:column;align-items:center;text-align:center;gap:6px;padding:26px 12px 24px}
+.mkt-num+.mkt-num{border-left:1px solid var(--line)}
+.mkt-num-ico{display:grid;place-items:center;width:48px;height:48px;border-radius:15px;margin-bottom:6px;background:var(--orange-tint);color:var(--orange)}
+.mkt-num:nth-child(even) .mkt-num-ico{background:var(--sky-tint);color:var(--sky-deep)}
+.mkt-num b{font-family:var(--font-display);font-size:clamp(24px,3vw,38px);font-weight:800;letter-spacing:-.05em;line-height:1.1;background:linear-gradient(100deg,#ea580c,#f97316 55%,#f59e0b);-webkit-background-clip:text;background-clip:text;color:transparent}
+.mkt-num > span:last-child{font-size:13px;font-weight:600;color:var(--muted)}
+
+@media (max-width:900px){
+  .mkt-numbers-grid{grid-template-columns:repeat(2,minmax(0,1fr))}
+  .mkt-num:nth-child(3){border-left:0}
+  .mkt-num:nth-child(n+3){border-top:1px solid var(--line)}
+}
+@media (max-width:760px){
+  .mkt-trustbar{font-size:12.5px;padding:9px 12px}
+  .mkt-chips li{height:32px;padding:0 11px;font-size:11.5px}
+  .mkt-num{padding:20px 8px 18px}
+  .mkt-num-ico{width:42px;height:42px}
+  .mkt-float-top{display:none}
+}
+@media (prefers-reduced-motion:reduce){.live-dot,.live-dot::after{animation:none}}
+
+/* banner footnote */
+.bb-foot{grid-column:1/-1;margin:2px 0 0;padding:14px 40px 0 0;display:flex;align-items:center;gap:10px;border-top:1px solid rgba(15,23,42,.08);font-size:14px;font-weight:700;color:#1e293b}
+.bb-foot svg{flex:none;color:var(--orange)}
+@media (max-width:980px){.bb-foot{padding-right:28px}}
+@media (max-width:760px){.bb-foot{margin-top:16px;padding:14px 0 0;font-size:13px;align-items:flex-start}.bb-foot svg{margin-top:2px}}

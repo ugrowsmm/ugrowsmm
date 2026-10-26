@@ -10,7 +10,7 @@ export interface Review {
  * real customers (with their permission), then set SAMPLE_REVIEWS to false. Showing invented reviews as
  * genuine ones misleads customers and can break consumer-protection rules.
  */
-export const SAMPLE_REVIEWS = true
+export const SAMPLE_REVIEWS = false
 
 export const REVIEWS: Review[] = [
   { name: 'Rohan Deshmukh', role: 'Reel creator', when: '2 hours ago', text: 'Paid through PhonePe and the balance showed up before I closed the app. Ordering took less than a minute.' },

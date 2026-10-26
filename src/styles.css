@@ -6231,7 +6231,9 @@ html,body{max-width:100%;overflow-x:clip}
   .cg-story{padding:14px 16px;margin:14px 0 18px}
   .cg-story-perks li{height:28px;font-size:11px}
   .cg-tools{flex-direction:column}
-  .cg-tools .select{width:100%}
+  .cg-tools .searchbox{flex:none;width:100%;height:50px;padding:0 14px}
+  .cg-tools .searchbox input{font-size:15px}
+  .cg-tools .select{width:100%;height:50px}
   .cg-acc-head{padding:14px}
   .cg-acc-tile{width:46px;height:46px}
   .cg-acc-name{font-size:16.5px}

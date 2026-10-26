@@ -6437,3 +6437,39 @@ html{scrollbar-gutter:stable}
   .mkt-faq-item.open .mkt-faq-answer > p{padding-bottom:18px}
   .mkt-head > p.mkt-head-note{font-size:13.5px}
 }
+
+/* Hero: compact, professional copy column */
+.mkt-hero-wrap .mkt-hero{align-items:center;gap:clamp(28px,4vw,56px)}
+.mkt-hero-copy h1{margin-top:20px;font-size:clamp(34px,4.2vw,54px);font-weight:800;line-height:1.08;letter-spacing:-.045em;color:var(--ink-strong)}
+.mkt-h1-grad{display:inline-block;padding-bottom:.06em;background:linear-gradient(95deg,#ea580c 0%,#f97316 45%,#0ea5e9 100%);-webkit-background-clip:text;background-clip:text;color:transparent}
+.mkt-hero-copy > p{margin-top:18px;max-width:50ch;font-size:16px;line-height:1.7;color:var(--muted)}
+.mkt-hero-copy > p b{color:var(--ink-strong);font-weight:800}
+
+.mkt-perks{list-style:none;margin:26px 0 0;padding:0;display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:14px 22px;max-width:520px}
+.mkt-perks li{display:flex;align-items:center;gap:12px;min-width:0}
+.mkt-perk-ico{display:grid;place-items:center;width:42px;height:42px;flex:none;border-radius:13px;background:var(--orange-tint);color:var(--orange)}
+.mkt-perks li:nth-child(even) .mkt-perk-ico{background:var(--sky-tint);color:var(--sky-deep)}
+.mkt-perk-ico svg{width:20px;height:20px}
+.mkt-perks li > span:last-child{display:flex;flex-direction:column;gap:1px;min-width:0}
+.mkt-perks b{font-size:14px;font-weight:800;color:var(--ink-strong);line-height:1.25}
+.mkt-perks small{font-size:12.5px;color:var(--muted);line-height:1.35}
+
+.mkt-hero-copy .mkt-cta-row{margin-top:28px}
+.mkt-proof{margin-top:26px;gap:12px}
+.mkt-proof-icons{display:flex}
+.mkt-proof-icons span{display:grid;place-items:center;width:32px;height:32px;margin-left:-8px;border-radius:50%;border:2px solid #fff;color:#fff;box-shadow:0 2px 6px -2px rgba(16,24,40,.35)}
+.mkt-proof-icons span:first-child{margin-left:0}
+.mkt-proof-icons .instagram{background:linear-gradient(45deg,#f9a03c,#d62976 55%,#962fbf)}
+.mkt-proof-icons .youtube{background:#e11d48}
+.mkt-proof-icons .telegram{background:#0ea5e9}
+.mkt-proof-icons .facebook{background:#2563eb}
+.mkt-proof small{margin:0;font-size:13px;font-weight:600;color:var(--muted)}
+.mkt-proof small b{color:var(--ink-strong);font-weight:800}
+
+@media (max-width:760px){
+  .mkt-hero-copy h1{margin-top:16px;font-size:clamp(30px,8.4vw,40px)}
+  .mkt-hero-copy > p{font-size:14.5px}
+  .mkt-perks{grid-template-columns:1fr;gap:12px;max-width:none}
+  .mkt-perks b{font-size:13.5px}
+  .mkt-hero-copy .mkt-cta-row{margin-top:22px}
+}

@@ -184,21 +184,32 @@ export default function Home() {
         <section className="mkt-hero">
           <div className="mkt-hero-copy">
             <h1>
-              Grow your socials.
+              Grow your social media
               <br />
-              <span className="grad-text">Faster. Cheaper.</span> <span className="grad-cool">Safer.</span>
+              <span className="mkt-h1-grad">faster, cheaper &amp; safer.</span>
             </h1>
             <p>
-              Followers, likes, views and plays for Instagram, YouTube, Telegram and more,
-              delivered from one fast panel. Pay in INR with UPI and start from just{' '}
-              <b>{PRICE_FROM_LABEL}</b>.
+              Followers, likes, views and plays for Instagram, YouTube, Telegram and more. Pay in
+              INR with UPI, with prices starting at just <b>{PRICE_FROM_LABEL}</b>.
             </p>
 
-            <ul className="mkt-chips">
-              <li><Zap /> Super fast delivery</li>
-              <li><ShieldCheck /> Secure payment</li>
-              <li><BadgeCheck /> Guaranteed services</li>
-              <li><Code2 /> API for resellers</li>
+            <ul className="mkt-perks">
+              <li>
+                <span className="mkt-perk-ico"><Zap /></span>
+                <span><b>Super fast delivery</b><small>Orders start within minutes</small></span>
+              </li>
+              <li>
+                <span className="mkt-perk-ico"><ShieldCheck /></span>
+                <span><b>Secure payment</b><small>Instant UPI top-up</small></span>
+              </li>
+              <li>
+                <span className="mkt-perk-ico"><BadgeCheck /></span>
+                <span><b>Guaranteed services</b><small>30-day refill protection</small></span>
+              </li>
+              <li>
+                <span className="mkt-perk-ico"><Code2 /></span>
+                <span><b>API for resellers</b><small>Automate every order</small></span>
+              </li>
             </ul>
 
             <div className="mkt-cta-row">
@@ -215,12 +226,15 @@ export default function Home() {
             </div>
 
             <div className="mkt-proof">
-              <div className="faces" aria-hidden="true">
-                <span>{USERS_LABEL}</span>
+              <div className="mkt-proof-icons" aria-hidden="true">
+                <span className="instagram"><PlatformIcon platform="instagram" size={15} /></span>
+                <span className="youtube"><PlatformIcon platform="youtube" size={15} /></span>
+                <span className="telegram"><PlatformIcon platform="telegram" size={15} /></span>
+                <span className="facebook"><PlatformIcon platform="facebook" size={15} /></span>
               </div>
-              <div>
-                <small>Trusted by {USERS_LABEL} creators, agencies &amp; resellers</small>
-              </div>
+              <small>
+                Trusted by <b>{USERS_LABEL}</b> creators, agencies &amp; resellers
+              </small>
             </div>
           </div>
 
@@ -281,14 +295,6 @@ export default function Home() {
               <div>
                 <b>Secure UPI top-up</b>
                 <span>PhonePe, GPay, Paytm, BHIM</span>
-              </div>
-            </div>
-
-            <div className="mkt-float mkt-float-top">
-              <span className="live-dot" aria-hidden="true" />
-              <div>
-                <b>New order started</b>
-                <span>Instagram Followers · just now</span>
               </div>
             </div>
           </div>

@@ -12,7 +12,10 @@ import {
   Clock,
   Code2,
   ShieldCheck,
+  ShoppingCart,
   Sparkles,
+  TrendingUp,
+  Users,
   Wallet,
   Zap,
 } from 'lucide-react'
@@ -28,7 +31,14 @@ import { LogoGlyph, Wordmark } from '../components/Logo'
 import InstallButton from '../components/InstallButton'
 import { scrollToSection } from '../lib/smoothScroll'
 import { useStore } from '../lib/store'
-import { REFERRAL_PERCENT_DEFAULT, USERS_LABEL } from '../lib/config'
+import {
+  ORDERS_LABEL,
+  ORDER_EVERY_LABEL,
+  PRICE_FROM_LABEL,
+  REFERRAL_PERCENT_DEFAULT,
+  SINCE_YEAR,
+  USERS_LABEL,
+} from '../lib/config'
 
 const SHOWCASE_IDS = [
   'ig-followers',
@@ -164,23 +174,35 @@ export default function Home() {
       </header>
 
       <main>
+        <div className="mkt-trustbar" role="status">
+          <span className="live-dot" aria-hidden="true" />
+          <span>Most trusted since {SINCE_YEAR}</span>
+        </div>
+
+        <div className="mkt-hero-wrap">
         <section className="mkt-hero">
           <div className="mkt-hero-copy">
-            <span className="eyebrow">
-              <Sparkles size={12} /> UGrowSMM · Premium SMM panel
-            </span>
             <h1>
-              Grow louder.
+              Grow your socials.
               <br />
-              <span className="grad-text">Ship results</span> <span className="grad-cool">faster.</span>
+              <span className="grad-text">Faster. Cheaper.</span> <span className="grad-cool">Safer.</span>
             </h1>
             <p>
-              Followers, likes, views and plays — delivered from one beautifully fast panel. Real
-              quality tiers, transparent INR pricing and an API for teams that automate.
+              Followers, likes, views and plays for Instagram, YouTube, Telegram and more,
+              delivered from one fast panel. Pay in INR with UPI and start from just{' '}
+              <b>{PRICE_FROM_LABEL}</b>.
             </p>
+
+            <ul className="mkt-chips">
+              <li><Zap /> Super fast delivery</li>
+              <li><ShieldCheck /> Secure payment</li>
+              <li><BadgeCheck /> Guaranteed services</li>
+              <li><Code2 /> API for resellers</li>
+            </ul>
+
             <div className="mkt-cta-row">
               <Link to={panelHref} className="btn btn-primary btn-lg">
-                Launch the panel <ArrowRight />
+                Start growing now <ArrowRight />
               </Link>
               <button
                 type="button"
@@ -260,8 +282,42 @@ export default function Home() {
                 <span>PhonePe, GPay, Paytm, BHIM</span>
               </div>
             </div>
+
+            <div className="mkt-float mkt-float-top">
+              <span className="live-dot" aria-hidden="true" />
+              <div>
+                <b>New order started</b>
+                <span>Instagram Followers · just now</span>
+              </div>
+            </div>
           </div>
         </section>
+
+        <div className="mkt-numbers">
+          <div className="mkt-numbers-grid">
+            <div className="mkt-num">
+              <span className="mkt-num-ico"><ShoppingCart size={22} /></span>
+              <b>{ORDERS_LABEL}</b>
+              <span>Total Orders</span>
+            </div>
+            <div className="mkt-num">
+              <span className="mkt-num-ico"><Zap size={22} /></span>
+              <b>{ORDER_EVERY_LABEL}</b>
+              <span>Order Placed Every</span>
+            </div>
+            <div className="mkt-num">
+              <span className="mkt-num-ico"><TrendingUp size={22} /></span>
+              <b>{PRICE_FROM_LABEL}</b>
+              <span>Price Starting</span>
+            </div>
+            <div className="mkt-num">
+              <span className="mkt-num-ico"><Users size={22} /></span>
+              <b>{USERS_LABEL}</b>
+              <span>Active Users</span>
+            </div>
+          </div>
+        </div>
+        </div>
 
         <div className="mkt-platforms" aria-label="Supported platforms">
           <span className="mkt-platforms-label">Built for every platform you grow</span>
@@ -464,10 +520,10 @@ export default function Home() {
         </section>
 
         <section className="mkt-section" aria-label="Referral bonus">
-          <BonusBanner cta />
-          <p className="small muted" style={{ textAlign: 'center', marginTop: 12 }}>
-            Creators and resellers earn {REFERRAL_PERCENT_DEFAULT}% of every top-up made by people who join with their code.
-          </p>
+          <BonusBanner
+            cta
+            footnote={`Creators and resellers earn ${REFERRAL_PERCENT_DEFAULT}% of every top-up made by people who join with their code.`}
+          />
         </section>
 
         <section className="mkt-final">

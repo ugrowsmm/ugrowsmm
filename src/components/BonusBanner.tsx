@@ -14,10 +14,12 @@ export default function BonusBanner({
   variant = 'user',
   cta = false,
   note,
+  footnote,
 }: {
   variant?: Variant
   cta?: boolean
   note?: string
+  footnote?: string
 }) {
   const views = BONUS_VIEWS.toLocaleString('en-IN')
   const creator = variant === 'creator'
@@ -141,6 +143,13 @@ export default function BonusBanner({
 
         <span className="bb-igicon"><PlatformIcon platform="instagram" size={34} /></span>
       </div>
+
+      {footnote ? (
+        <p className="bb-foot">
+          <Users size={16} />
+          <span>{footnote}</span>
+        </p>
+      ) : null}
     </section>
   )
 }

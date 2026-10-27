@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useState } from 'react'
 import { Link, Navigate } from 'react-router-dom'
 import { canAccessAdmin } from '../lib/admins'
-import { ArrowLeft, CheckCircle2, Clock, Gift, Lock, Percent, RotateCcw, Search, Trash2, Wallet, XCircle } from 'lucide-react'
+import { ArrowLeft, CheckCircle2, Clock, Gift, Lock, Minus, Percent, RotateCcw, Search, Trash2, Wallet, XCircle } from 'lucide-react'
 import { REFERRAL_PERCENT_DEFAULT, useStore } from '../lib/store'
 import { rpc, apiReady } from '../lib/api'
 import { formatINR, timeAgo, type OrderStatus } from '../lib/data'
@@ -12,7 +12,7 @@ const ORDER_STATUSES: OrderStatus[] = ['Pending', 'In progress', 'Completed', 'P
 const ORDER_FILTERS = ['All', 'Needs attention', 'Pending', 'In progress', 'Completed', 'Canceled'] as const
 const STUCK_AFTER_HOURS = 6
 type Tab = (typeof TABS)[number]
-type ActType = 'funds' | 'referral' | 'cashback' | 'delete'
+type ActType = 'funds' | 'referral' | 'cashback' | 'delete' | 'cutFunds' | 'cutReferral'
 interface AdminUser { email: string; name: string; code: string; refBy: string; percent: number; balance: number; earned: number }
 interface AdminOrder { id: string; email: string; name: string; link: string; qty: number; charge: number; status: OrderStatus; createdAt: string; tag: string }
 interface AdminPayout { key: string; id?: number; localId?: string; email: string; amount: number; method: string; details: string; status: 'Processing' | 'Paid' | 'Rejected'; createdAt: string }
@@ -98,22 +98,28 @@ export default function Admin() {
     if (!act) return
     const { type, user } = act
     const a = Number(amount)
-    if ((type === 'funds' || type === 'referral') && !(a > 0)) return toast('Enter a valid amount', undefined, 'error')
+    if ((type === 'funds' || type === 'referral' || type === 'cutFunds' || type === 'cutReferral') && !(a > 0)) return toast('Enter a valid amount', undefined, 'error')
+    if (!live && type === 'cutFunds' && a > (kind === 'paid' ? state.balance : state.unpaid)) return toast('Amount is more than the current balance', undefined, 'error')
+    if (!live && type === 'cutReferral' && a > state.referral.earned - state.referral.withdrawn) return toast('Amount is more than the available referral balance', undefined, 'error')
     if (type === 'cashback' && !(Number(pct) >= 0 && Number(pct) <= 100)) return toast('Percent must be 0–100', undefined, 'error')
     if (live) {
       const { error } =
         type === 'funds' ? await rpc('admin_credit', { p_email: user.email, p_amount: a, p_kind: kind })
         : type === 'referral' ? await rpc('admin_credit', { p_email: user.email, p_amount: a, p_kind: 'referral' })
+        : type === 'cutFunds' ? await rpc('admin_debit', { p_email: user.email, p_amount: a, p_kind: kind })
+        : type === 'cutReferral' ? await rpc('admin_debit', { p_email: user.email, p_amount: a, p_kind: 'referral' })
         : type === 'cashback' ? await rpc('admin_set_cashback', { p_code: user.code, p_percent: Number(pct) })
         : await rpc('admin_delete_user', { p_email: user.email })
-      if (error) return toast('Failed', error === 'user_not_found' ? 'User not found (admins cannot be deleted here).' : error, 'error')
+      if (error) return toast('Failed', error === 'user_not_found' ? 'User not found (admins cannot be deleted here).' : error === 'insufficient' ? 'That is more than the user currently has. Enter a smaller amount.' : error, 'error')
     } else {
       if (type === 'funds' && isLocal(user.email)) s.adminCredit(kind, a)
       if (type === 'referral' && isLocal(user.email)) s.adminReferralEarning(a)
+      if (type === 'cutFunds' && isLocal(user.email)) s.adminDebit(kind, a)
+      if (type === 'cutReferral' && isLocal(user.email)) s.adminReferralEarning(-a)
       if (type === 'cashback') s.setCashback(user.code, Number(pct))
       if (type === 'delete' && isLocal(user.email)) s.deleteAccount()
     }
-    toast('Done', type === 'delete' ? `${user.email} deleted` : 'Saved')
+    toast('Done', type === 'delete' ? `${user.email} deleted` : type === 'cutFunds' || type === 'cutReferral' ? 'Amount deducted' : 'Saved')
     close()
     if (live) void load()
   }
@@ -171,6 +177,8 @@ export default function Admin() {
               <div className="adm-actions">
                 <button type="button" className="btn btn-soft btn-sm" onClick={() => setAct({ type: 'funds', user: u })}><Wallet /> Add funds</button>
                 <button type="button" className="btn btn-soft btn-sm" onClick={() => setAct({ type: 'referral', user: u })}><Gift /> Referral funds</button>
+                <button type="button" className="btn btn-soft btn-sm" onClick={() => setAct({ type: 'cutFunds', user: u })}><Minus /> Cut funds</button>
+                <button type="button" className="btn btn-soft btn-sm" onClick={() => setAct({ type: 'cutReferral', user: u })}><Minus /> Cut referral</button>
                 <button type="button" className="btn btn-soft btn-sm" onClick={() => { setPct(String(u.percent)); setAct({ type: 'cashback', user: u }) }}><Percent /> Cashback %</button>
                 <button type="button" className="btn btn-danger btn-sm" onClick={() => setAct({ type: 'delete', user: u })}><Trash2 /> Delete</button>
               </div>
@@ -287,9 +295,9 @@ export default function Admin() {
       <Modal open={!!act} onClose={close} labelledBy="adm-t" width={420}>
         {act && (
           <>
-            <ModalHead id="adm-t" title={act.type === 'funds' ? 'Add funds' : act.type === 'referral' ? 'Add referral funds' : act.type === 'cashback' ? 'Affiliate percentage' : 'Delete user'} subtitle={act.user.email} onClose={close} />
+            <ModalHead id="adm-t" title={act.type === 'funds' ? 'Add funds' : act.type === 'referral' ? 'Add referral funds' : act.type === 'cutFunds' ? 'Cut funds' : act.type === 'cutReferral' ? 'Cut referral funds' : act.type === 'cashback' ? 'Affiliate percentage' : 'Delete user'} subtitle={act.user.email} onClose={close} />
             <div className="stack">
-              {(act.type === 'funds' || act.type === 'referral') && (
+              {(act.type === 'funds' || act.type === 'referral' || act.type === 'cutFunds' || act.type === 'cutReferral') && (
                 <input className="input" type="number" inputMode="decimal" placeholder="Amount (₹)" value={amount} onChange={(e) => setAmount(e.target.value)} />
               )}
               {act.type === 'funds' && (
@@ -299,6 +307,13 @@ export default function Admin() {
                 </>
               )}
               {act.type === 'referral' && <InfoBox>Referral funds are the only balance the user can withdraw.</InfoBox>}
+              {act.type === 'cutFunds' && (
+                <>
+                  <Segmented label="Deduct from" options={['paid', 'unpaid'] as const} value={kind} onChange={setKind} />
+                  <InfoBox warn>Removes the amount from the user’s <b>{kind === 'paid' ? 'paid wallet' : 'unpaid (demo) credit'}</b>. It cannot go below ₹0.</InfoBox>
+                </>
+              )}
+              {act.type === 'cutReferral' && <InfoBox warn>Removes the amount from the user’s referral / cashback earnings. Only what is still withdrawable can be cut.</InfoBox>}
               {act.type === 'cashback' && (
                 <>
                   <input className="input" type="number" inputMode="decimal" placeholder="Percent" value={pct} onChange={(e) => setPct(e.target.value)} />
@@ -306,8 +321,8 @@ export default function Admin() {
                 </>
               )}
               {act.type === 'delete' && <InfoBox warn>This removes the account and cannot be undone.</InfoBox>}
-              <button className={`btn ${act.type === 'delete' ? 'btn-danger' : 'btn-primary'} btn-block`} type="button" onClick={run}>
-                {act.type === 'delete' ? 'Delete user' : 'Save'}
+              <button className={`btn ${act.type === 'delete' || act.type === 'cutFunds' || act.type === 'cutReferral' ? 'btn-danger' : 'btn-primary'} btn-block`} type="button" onClick={run}>
+                {act.type === 'delete' ? 'Delete user' : act.type === 'cutFunds' || act.type === 'cutReferral' ? 'Deduct' : 'Save'}
               </button>
             </div>
           </>

@@ -285,7 +285,7 @@ export default function LegalPage({ slug }: { slug: LegalSlug }) {
               <Sparkles size={14} />
               <div>
                 <b>Need a hand?</b>
-                <a href="mailto:support@ugrowsmm.com">support@ugrowsmm.com</a>
+                <Link to="/support">Raise a support ticket</Link>
               </div>
             </div>
           </aside>
@@ -343,12 +343,9 @@ export default function LegalPage({ slug }: { slug: LegalSlug }) {
                     hours.
                   </p>
                 </div>
-                <a
-                  className="btn btn-primary"
-                  href="mailto:refunds@ugrowsmm.com?subject=Refund%20request"
-                >
-                  <Mail /> Email refunds
-                </a>
+                <Link className="btn btn-primary" to="/support">
+                  <Mail /> Raise a refund ticket
+                </Link>
               </div>
             ) : null}
 
@@ -362,9 +359,9 @@ export default function LegalPage({ slug }: { slug: LegalSlug }) {
                   Our team answers legal and account queries within one business day.
                 </p>
               </div>
-              <a className="btn btn-ghost btn-sm" href="mailto:support@ugrowsmm.com">
-                Contact support
-              </a>
+              <Link className="btn btn-ghost btn-sm" to="/support">
+                Raise a ticket
+              </Link>
             </div>
 
             <div className="legal-end">

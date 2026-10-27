@@ -48,7 +48,7 @@ export const LEGAL_DOCS: Record<LegalSlug, LegalDoc> = {
           'Provide accurate account information and keep it up to date.',
           'Keep your password, two-factor codes and API key confidential. You are responsible for activity performed with your credentials.',
           'One person or organisation should maintain one account unless we agree otherwise in writing.',
-          'Notify us immediately at support@ugrowsmm.com if you believe your account or API key has been compromised.',
+          'Notify us immediately by raising a ticket from the Support page if you believe your account or API key has been compromised.',
         ],
       },
       {
@@ -88,7 +88,7 @@ export const LEGAL_DOCS: Record<LegalSlug, LegalDoc> = {
         title: 'Delivery, refill and guarantees',
         paragraphs: [
           'We aim to start every order within the window shown on the service. High-volume orders, platform congestion or provider maintenance can extend delivery.',
-          'If delivery has not started within 24 hours, or an order stalls before completion, contact support with the order ID. We will investigate and, where appropriate, restart, refill or refund the remaining quantity.',
+          'If delivery has not started within 24 hours, or an order stalls before completion, raise a ticket from the Support page with the order ID. We will investigate and, where appropriate, restart, refill or refund the remaining quantity.',
           'Refill protection applies for 30 days on eligible services where stated. Refills cover drops that occur within the protection window and exclude changes caused by you deleting the post, changing the account or violating platform rules.',
         ],
       },
@@ -148,7 +148,7 @@ export const LEGAL_DOCS: Record<LegalSlug, LegalDoc> = {
         title: 'Governing law and contact',
         paragraphs: [
           'These Terms are governed by the laws of India. Subject to applicable consumer protections, the courts of Mumbai, Maharashtra have exclusive jurisdiction over disputes.',
-          'Questions about these Terms? Email support@ugrowsmm.com or use the contact options in your account.',
+          'Questions about these Terms? Raise a ticket from the Support page in your account.',
         ],
       },
     ],
@@ -258,13 +258,13 @@ export const LEGAL_DOCS: Record<LegalSlug, LegalDoc> = {
           'Lodge a complaint with a data protection authority.',
         ],
         note:
-          'To exercise a right, email privacy@ugrowsmm.com. We may need to verify your identity before responding, and we will aim to reply within 30 days.',
+          'To exercise a right, raise a ticket from the Support page. We may need to verify your identity before responding, and we will aim to reply within 30 days.',
       },
       {
         id: 'children',
         title: 'Children’s privacy',
         paragraphs: [
-          'The panel is not intended for anyone under 18. We do not knowingly collect personal data from children. If you believe a minor has created an account, contact us and we will take appropriate action.',
+          'The panel is not intended for anyone under 18. We do not knowingly collect personal data from children. If you believe a minor has created an account, raise a ticket from the Support page and we will take appropriate action.',
         ],
       },
       {
@@ -272,7 +272,7 @@ export const LEGAL_DOCS: Record<LegalSlug, LegalDoc> = {
         title: 'Changes and contact',
         paragraphs: [
           'We may update this policy from time to time. The latest revision date is shown at the top of the page. Material changes will be communicated through the panel or by email.',
-          'For privacy questions, contact privacy@ugrowsmm.com. For general support, write to support@ugrowsmm.com.',
+          'For privacy questions or general support, raise a ticket from the Support page in your account.',
         ],
       },
     ],
@@ -345,10 +345,10 @@ export const LEGAL_DOCS: Record<LegalSlug, LegalDoc> = {
         title: 'How to request a refund',
         list: [
           'Open Order History and copy the order ID.',
-          'Email refunds@ugrowsmm.com within 7 days of the order date, or contact support from your account.',
+          'Raise a refund ticket from the Support page within 7 days of the order date.',
           'Include the order ID, a short description of the issue and screenshots showing the current count.',
           'We will acknowledge your request within 48 hours and aim to resolve it within 5–7 business days.',
-          'Do not open a chargeback or payment dispute before contacting us; it can slow the review and suspend your account.',
+          'Do not open a chargeback or payment dispute before raising a ticket with us; it can slow the review and suspend your account.',
         ],
       },
       {
@@ -363,7 +363,7 @@ export const LEGAL_DOCS: Record<LegalSlug, LegalDoc> = {
         id: 'chargebacks',
         title: 'Chargebacks and disputes',
         paragraphs: [
-          'Please contact us first so we can resolve the issue directly. Filing a chargeback for a delivered order, or for an order that has an active support case, may result in account suspension while the dispute is investigated.',
+          'Please raise a ticket from the Support page first so we can resolve the issue directly. Filing a chargeback for a delivered order, or for an order that has an active support case, may result in account suspension while the dispute is investigated.',
           'We may recover reasonable chargeback fees where a dispute is resolved in our favour and the fee is permitted by applicable law.',
         ],
       },
@@ -371,7 +371,7 @@ export const LEGAL_DOCS: Record<LegalSlug, LegalDoc> = {
         id: 'contact',
         title: 'Contact',
         paragraphs: [
-          'Refund questions: refunds@ugrowsmm.com. General support: support@ugrowsmm.com. We will always try to find a practical solution before closing a case.',
+          'For refund questions and general support, raise a ticket from the Support page in your account. We will always try to find a practical solution before closing a case.',
         ],
       },
     ],
@@ -441,7 +441,7 @@ export const LEGAL_DOCS: Record<LegalSlug, LegalDoc> = {
         title: 'Updates and contact',
         paragraphs: [
           'We may update this policy when our use of cookies changes. The date at the top of the page shows the latest revision.',
-          'Questions? Email privacy@ugrowsmm.com.',
+          'Questions? Raise a ticket from the Support page in your account.',
         ],
       },
     ],

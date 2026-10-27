@@ -99,6 +99,8 @@ interface PlaceOrderInput {
   link: string
   quantity: number
   dripfeed: boolean
+  /** Custom-comments services only: one comment per line. The quantity is the number of lines. */
+  comments?: string
 }
 
 interface PlaceOrderResult {
@@ -368,9 +370,15 @@ export function StoreProvider({ children }: { children: ReactNode }) {
   }, [state.signedIn, state.real, refreshAccount])
 
   const placeOrder = useCallback(
-    async ({ serviceId, link, quantity, dripfeed }: PlaceOrderInput): Promise<PlaceOrderResult> => {
+    async ({ serviceId, link, quantity, dripfeed, comments }: PlaceOrderInput): Promise<PlaceOrderResult> => {
       const service = SERVICES.find((s) => s.id === serviceId)
       if (!service) return { ok: false, error: 'Please choose a service to continue.' }
+      if (service.custom) {
+        // custom comments: one comment per line, and the number of lines is the quantity
+        const lines = (comments ?? '').split('\n').map((l) => l.trim()).filter(Boolean)
+        if (lines.length === 0) return { ok: false, error: 'Add your comments, one comment per line.' }
+        quantity = lines.length
+      }
       if (!link.trim()) return { ok: false, error: 'Add the target link for this order.' }
       if (!/^[a-z0-9-]+(\.[a-z0-9-]+)+/i.test(link.trim().replace(/^https?:\/\//, '')))
         return { ok: false, error: 'That link doesn’t look right. Check the URL and try again.' }

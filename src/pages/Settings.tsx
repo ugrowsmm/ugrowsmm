@@ -53,6 +53,7 @@ export default function SettingsPage() {
     deleteAccount,
     toast,
   } = useStore()
+  const [deleting, setDeleting] = useState(false)
 
   const [tab, setTab] = useState<Tab>('Profile')
   const [name, setName] = useState(state.profile.name)
@@ -618,26 +619,20 @@ export default function SettingsPage() {
                 </div>
                 <p className="small" style={{ color: '#475467', lineHeight: 1.6 }}>
                   {live
-                    ? 'To delete your account, raise a Support ticket. We check for running orders and any wallet balance or referral earnings first, then remove the account.'
+                    ? 'Permanently delete your account, order history, API key and wallet. You can delete only when no order is running and no payout is being processed. This cannot be undone.'
                     : 'Permanently remove this account, its order history, API key and wallet balance. This action cannot be undone.'}
                 </p>
                 <div className="dashed-divider" />
-                {live ? (
-                  <Link to="/support" className="btn btn-danger">
-                    <Trash2 /> Request account deletion
-                  </Link>
-                ) : (
-                  <button
-                    type="button"
-                    className="btn btn-danger"
-                    onClick={() => {
-                      setDeleteText('')
-                      setDeleteOpen(true)
-                    }}
-                  >
-                    <Trash2 /> Delete my account
-                  </button>
-                )}
+                <button
+                  type="button"
+                  className="btn btn-danger"
+                  onClick={() => {
+                    setDeleteText('')
+                    setDeleteOpen(true)
+                  }}
+                >
+                  <Trash2 /> Delete my account
+                </button>
               </div>
             </>
           ) : null}
@@ -647,13 +642,18 @@ export default function SettingsPage() {
       <Modal open={deleteOpen} onClose={() => setDeleteOpen(false)} labelledBy="delete-title">
         <ModalHead
           id="delete-title"
-          title="Delete this demo account?"
-          subtitle="This wipes your profile, orders, wallet history and API key from this browser."
+          title={live ? 'Delete your account?' : 'Delete this demo account?'}
+          subtitle={live ? 'This permanently removes your profile, orders, wallet history and API key.' : 'This wipes your profile, orders, wallet history and API key from this browser.'}
           onClose={() => setDeleteOpen(false)}
         />
         <div className="modal-icon danger">
           <Trash2 />
         </div>
+        {live && state.balance + state.referral.earned - state.referral.withdrawn > 0 ? (
+          <InfoBox warn>
+            You still have {formatINR(state.balance)} in your wallet and {formatINR(Math.max(0, state.referral.earned - state.referral.withdrawn))} in referral earnings. These will be lost when the account is deleted. Withdraw or use them first if you want them.
+          </InfoBox>
+        ) : null}
         <p className="small muted" style={{ lineHeight: 1.6 }}>
           Type <b style={{ color: '#be123c' }}>DELETE</b> below to confirm. You’ll be returned to
           the sign-in screen.
@@ -675,14 +675,36 @@ export default function SettingsPage() {
           <button
             type="button"
             className="btn btn-danger"
-            disabled={deleteText.trim().toUpperCase() !== 'DELETE'}
-            onClick={() => {
+            disabled={deleting || deleteText.trim() !== 'DELETE'}
+            onClick={async () => {
+              if (live) {
+                setDeleting(true)
+                const { error } = await rpc('delete_my_account')
+                setDeleting(false)
+                if (error) {
+                  return toast(
+                    'Could not delete account',
+                    error === 'running_orders'
+                      ? 'You have an order that is still running. You can delete the account once it is completed.'
+                      : error === 'pending_payout'
+                        ? 'A payout request is being processed. You can delete the account once it is paid or rejected.'
+                        : error === 'admin_account'
+                          ? 'Admin accounts cannot be deleted here.'
+                          : 'Please try again in a minute, or contact Support.',
+                    'error',
+                  )
+                }
+                setDeleteOpen(false)
+                signOut()
+                toast('Account deleted', 'Your account and data were removed.', 'info')
+                return
+              }
               setDeleteOpen(false)
               deleteAccount()
               toast('Account deleted', 'Your demo data was cleared. Sign in to start fresh.', 'info')
             }}
           >
-            <Trash2 /> Delete forever
+            <Trash2 /> {deleting ? 'Deleting…' : 'Delete forever'}
           </button>
         </div>
       </Modal>

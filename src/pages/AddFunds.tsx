@@ -43,7 +43,7 @@ export default function AddFunds() {
   const start = async () => {
     if (!valid) return toast('Enter an amount', 'Minimum ₹10 and maximum ₹50,000.', 'error')
     // Real accounts: automatic top-up is switched on once the payment gateway is connected (nothing is charged before that)
-    if (apiReady()) return toast('Top-ups opening soon', 'Online top-up is being switched on. Please check back shortly or contact support.', 'info')
+    if (apiReady()) return toast('Top-ups opening soon', 'Online top-up is being switched on. Please check back shortly or raise a ticket from Support.', 'info')
     setBusy(true)
     credited.current = false
     const res: any = {}

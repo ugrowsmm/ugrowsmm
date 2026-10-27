@@ -690,7 +690,7 @@ export default function SettingsPage() {
                         ? 'A payout request is being processed. You can delete the account once it is paid or rejected.'
                         : error === 'admin_account'
                           ? 'Admin accounts cannot be deleted here.'
-                          : 'Please try again in a minute, or contact Support.',
+                          : 'Please try again in a minute, or raise a ticket from Support.',
                     'error',
                   )
                 }

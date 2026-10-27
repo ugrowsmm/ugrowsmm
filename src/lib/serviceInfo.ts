@@ -22,7 +22,7 @@ export function refillOf(s: Pick<Service, 'name' | 'category' | 'description'>):
   if (days) {
     return { label: `${days[1]} days`, tone: 'ok', detail: `Any drop in the first ${days[1]} days is refilled.` }
   }
-  if (/no[- ]?drop|auto[- ]?refill/i.test(text)) {
+  if (/non?[- ]?drop|auto[- ]?refill/i.test(text)) {
     return { label: 'Auto refill', tone: 'good', detail: 'Refill runs automatically, no ticket needed.' }
   }
   if (/low drop/i.test(text)) {
@@ -33,25 +33,35 @@ export function refillOf(s: Pick<Service, 'name' | 'category' | 'description'>):
 
 type Kind = 'profile' | 'post'
 
-const PROFILE_WORDS = /follower|subscriber|member|page like|fan|channel/i
+const PROFILE_WORDS = /follower|subscriber|member|page like|fan|channel|traffic/i
 
 export function linkKind(s: Pick<Service, 'category' | 'name'>): Kind {
   return PROFILE_WORDS.test(`${s.category} ${s.name}`) && !/video|post|reel|short/i.test(s.name) ? 'profile' : 'post'
 }
 
-const PLACEHOLDER: Record<Platform, { profile: string; post: string }> = {
+const PLACEHOLDER: Partial<Record<Platform, { profile: string; post: string }>> = {
   instagram: { profile: 'https://instagram.com/your.username', post: 'https://instagram.com/reel/XXXXXXXX' },
   youtube: { profile: 'https://youtube.com/@yourchannel', post: 'https://youtube.com/watch?v=XXXXXXXX' },
-  tiktok: { profile: 'https://tiktok.com/@yourusername', post: 'https://tiktok.com/@user/video/123456' },
   x: { profile: 'https://x.com/yourusername', post: 'https://x.com/user/status/123456' },
   facebook: { profile: 'https://facebook.com/yourpage', post: 'https://facebook.com/yourpage/posts/123456' },
   telegram: { profile: 'https://t.me/yourchannel', post: 'https://t.me/yourchannel/123' },
   spotify: { profile: 'https://open.spotify.com/artist/XXXX', post: 'https://open.spotify.com/track/XXXX' },
+  snapchat: { profile: 'your_snapchat_username', post: 'https://snapchat.com/spotlight/XXXX' },
+  jiosaavn: { profile: 'https://www.jiosaavn.com/artist/XXXX', post: 'https://www.jiosaavn.com/song/XXXX' },
+  website: { profile: 'https://yourwebsite.com', post: 'https://yourwebsite.com/page' },
+  threads: { profile: 'https://threads.net/@yourusername', post: 'https://threads.net/@user/post/XXXX' },
+  whatsapp: { profile: 'https://whatsapp.com/channel/XXXX', post: 'https://whatsapp.com/channel/XXXX' },
+  linkedin: { profile: 'https://linkedin.com/in/yourname', post: 'https://linkedin.com/posts/XXXX' },
+  twitch: { profile: 'https://twitch.tv/yourchannel', post: 'https://twitch.tv/videos/XXXX' },
+  kick: { profile: 'https://kick.com/yourchannel', post: 'https://kick.com/yourchannel' },
+  soundcloud: { profile: 'https://soundcloud.com/yourname', post: 'https://soundcloud.com/yourname/track' },
+  pinterest: { profile: 'https://pinterest.com/yourname', post: 'https://pinterest.com/pin/XXXX' },
 }
+const FALLBACK_LINK = { profile: 'https://example.com/your-profile', post: 'https://example.com/your-post' }
 
 export function linkGuide(s: Service): { need: string; placeholder: string } {
   const kind = linkKind(s)
-  const placeholder = PLACEHOLDER[s.platform][kind]
+  const placeholder = (PLACEHOLDER[s.platform] ?? FALLBACK_LINK)[kind]
   const need =
     s.platform === 'telegram'
       ? 'Public channel or group link'

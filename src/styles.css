@@ -6515,3 +6515,56 @@ html{scrollbar-gutter:stable}
   .ts-name{font-size:25px}
   .ts-from{font-size:27px}
 }
+
+/* ============================================================
+   Crisp outlines: one thin, theme-matched border on every block
+   ============================================================ */
+:root{
+  --outline:#d6dce6;
+  --outline-strong:#bcc5d3;
+  --outline-orange:rgba(249,115,22,.42);
+  --outline-sky:rgba(14,165,233,.4);
+  --shadow-card:0 1px 2px rgba(16,24,40,.06),0 10px 22px -18px rgba(16,24,40,.3);
+}
+body{-webkit-font-smoothing:antialiased;-moz-osx-font-smoothing:grayscale;text-rendering:optimizeLegibility}
+
+/* neutral containers, cards, tiles, boxes */
+.card,.stat,.mini-metric,.form-section,.order-card,.service-card,.service-option,.platform-tile,
+.amount-btn,.pay-method,.pay-method .pay-icon,.trust-item,.code-tabs,.code-block,.endpoint,.settings-nav,
+.footer-platform,.install-step,.quick-action,.empty .ic,.segmented,.mkt-platform,.mkt-feature,.mkt-step,
+.mkt-review,.mkt-faq-item,.legal-side-help,.legal-contact-card,.cookie-card,.qr-box,.upi-app,.upi-logo,
+.adm-card,.tier-card,.promo-box,.rv-card,.cg-tab,.cg-story-perks li,.cg-acc,.cg-acc-chev,.cg-card,
+.om-x,.om-spec,.om-block,.om-sum,.om-done-box,.mkt-chips li,.mkt-numbers-grid,.ts-card,.searchbox,
+.icon-btn,.upi-ours{
+  border-color:var(--outline);
+}
+.input,.select,.textarea,.btn-ghost,.mkt-mock,.modal,.auth-preview,.switch{border-color:var(--outline-strong)}
+.btn-ghost{border-width:1px;border-style:solid}
+
+/* containers that had no outline yet */
+.cg-acc-tile,.om-tile,.upi-tile,.upi-ours{border:1px solid var(--outline)}
+.cg-acc-head{border:0}
+
+/* tinted icon tiles + pills get a matching tinted outline */
+.bb-pill,.mkt-num-ico,.mkt-perk-ico,.bb-ico.o,.bb-ico.p,.om-spec>svg{border:1px solid var(--outline-orange)}
+.mkt-num:nth-child(even) .mkt-num-ico,.mkt-perks li:nth-child(even) .mkt-perk-ico,.bb-ico.b{border-color:var(--outline-sky)}
+
+/* orange / sky accent blocks: sharper outline */
+.sidebar-balance,.hero-balance,.mini-metric .icon,.modal-icon,.qa-icon,.quick-action .qa-icon,
+.mkt-mock-balance,.mkt-feature-icon,.mkt-step-icon,.mkt-final-inner,.legal-contact-icon,.bonus-banner{
+  border-color:var(--outline-orange);
+}
+.nav-badge,.info-box,.mkt-float-icon,.bb,.bb-feats,.bb-chip{border-color:var(--outline-sky)}
+.api-key-box,.demo-hint{border-color:var(--outline-orange)}
+.upi-id-box{border-color:var(--outline-strong)}
+.mkt-num+.mkt-num{border-left-color:var(--outline)}
+@media (max-width:900px){.mkt-num:nth-child(n+3){border-top-color:var(--outline)}}
+
+/* interactive blocks: outline warms up on hover */
+.service-card:hover,.platform-tile:hover,.quick-action:hover,.mkt-feature:hover,.mkt-step:hover,
+.mkt-review:hover,.cg-card:hover,.order-card:hover,.rv-card:hover,.mkt-platform:hover{
+  border-color:var(--outline-orange);
+}
+
+/* page chrome: header, footer, sidebar edges */
+.mkt-header,.app-footer,.sidebar,.topbar{border-color:var(--outline)}

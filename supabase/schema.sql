@@ -69,7 +69,7 @@ create table if not exists public.ledger (
   user_id    uuid not null references public.profiles(id) on delete cascade,
   amount     numeric(12,2) not null,
   kind       text not null check (kind in ('paid','unpaid','referral')),
-  type       text not null check (type in ('deposit','order','refund','referral')),
+  type       text not null check (type in ('deposit','order','refund','referral','adjustment')),
   note       text not null default '',
   ref        text,
   created_at timestamptz not null default now()
@@ -389,6 +389,52 @@ begin
   delete from auth.users where id = uid;
 end $$;
 
+-- ---------- admin: cut (deduct) funds / referral earnings, and let a user delete their own account ----------
+-- Existing databases: this block is safe to run again. It widens the ledger "type" list to allow admin deductions.
+alter table public.ledger drop constraint if exists ledger_type_check;
+alter table public.ledger add constraint ledger_type_check
+  check (type in ('deposit','order','refund','referral','adjustment'));
+
+-- p_kind: paid (spendable wallet), unpaid (demo credit) or referral (cashback / referral earnings).
+-- A deduction can never take a balance below zero (referral: below what is still withdrawable).
+create or replace function public.admin_debit(p_email text, p_amount numeric, p_kind text) returns void
+language plpgsql security definer set search_path = public as $$
+declare uid uuid; w record; avail numeric; amt numeric;
+begin
+  if not public.is_admin() then raise exception 'forbidden'; end if;
+  if p_amount is null or p_amount <= 0 or p_kind not in ('paid','unpaid','referral') then raise exception 'invalid'; end if;
+  amt := round(p_amount, 2);
+  select id into uid from public.profiles where email = public.canon_email(p_email);
+  if uid is null then raise exception 'user_not_found'; end if;
+  perform pg_advisory_xact_lock(hashtext(uid::text));
+  select * into w from public.wallet_of(uid);
+  if p_kind = 'paid' then avail := w.paid;
+  elsif p_kind = 'unpaid' then avail := w.unpaid;
+  else avail := w.earned - coalesce((select sum(amount) from public.withdrawals where user_id = uid and status <> 'Rejected'), 0);
+  end if;
+  if amt > avail then raise exception 'insufficient'; end if;
+  insert into public.ledger(user_id, amount, kind, type, note)
+  values (uid, -amt, p_kind, 'adjustment',
+          case p_kind when 'referral' then 'Referral adjustment' when 'unpaid' then 'Promo credit removed' else 'Wallet adjustment' end);
+end $$;
+
+-- The logged-in user deletes their OWN account. Blocked while an order is running or a payout is being processed.
+-- Any wallet balance / referral earnings left are forgone (the app shows a clear warning before this is called).
+create or replace function public.delete_my_account() returns void
+language plpgsql security definer set search_path = public as $$
+declare uid uuid := auth.uid();
+begin
+  if uid is null then raise exception 'auth'; end if;
+  if exists (select 1 from public.profiles where id = uid and is_admin) then raise exception 'admin_account'; end if;
+  if exists (select 1 from public.orders where user_id = uid and not is_demo and status in ('Pending','In progress')) then
+    raise exception 'running_orders';
+  end if;
+  if exists (select 1 from public.withdrawals where user_id = uid and status = 'Processing') then
+    raise exception 'pending_payout';
+  end if;
+  delete from auth.users where id = uid;
+end $$;
+
 -- ---------- who may call what ----------
 revoke all on function public.canon_email(text), public.guard_email(), public.release_email(), public.handle_new_user(),
   public.is_admin(), public.wallet_of(uuid), public.credit_deposit(uuid, numeric, text) from public, anon, authenticated;
@@ -398,12 +444,12 @@ revoke all on function public.get_account(), public.update_profile(text), public
   public.create_ticket(text, text, text, text), public.admin_overview(), public.admin_credit(text, numeric, text),
   public.admin_set_cashback(text, numeric), public.admin_set_order_status(bigint, text, boolean),
   public.admin_set_withdrawal_status(bigint, text), public.admin_set_ticket_status(text, text),
-  public.admin_delete_user(text) from public, anon;
+  public.admin_delete_user(text), public.admin_debit(text, numeric, text), public.delete_my_account() from public, anon;
 grant execute on function public.get_account(), public.update_profile(text), public.request_withdrawal(numeric, text, text),
   public.create_ticket(text, text, text, text), public.admin_overview(), public.admin_credit(text, numeric, text),
   public.admin_set_cashback(text, numeric), public.admin_set_order_status(bigint, text, boolean),
   public.admin_set_withdrawal_status(bigint, text), public.admin_set_ticket_status(text, text),
-  public.admin_delete_user(text) to authenticated;
+  public.admin_delete_user(text), public.admin_debit(text, numeric, text), public.delete_my_account() to authenticated;
 
 -- ---------- after YOU have signed up and verified your email, make yourself admin (put your own email in) ----------
 -- update public.profiles set is_admin = true where email = 'yourname@gmail.com';

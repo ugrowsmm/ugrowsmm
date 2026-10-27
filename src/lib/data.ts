@@ -45,7 +45,7 @@ export interface Order {
 
 export interface Transaction {
   id: string
-  type: 'deposit' | 'order' | 'refund'
+  type: 'deposit' | 'order' | 'refund' | 'adjustment'
   label: string
   amount: number
   createdAt: string

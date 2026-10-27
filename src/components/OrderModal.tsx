@@ -41,16 +41,22 @@ function Sheet({ service, onClose }: { service: Service; onClose: () => void }) 
   const [link, setLink] = useState('')
   const [quantity, setQuantity] = useState(() => Math.min(Math.max(1000, service.min), service.max))
   const [drip, setDrip] = useState(false)
+  const [comments, setComments] = useState('')
   const [error, setError] = useState('')
   const [placing, setPlacing] = useState(false)
   const [result, setResult] = useState<Order | null>(null)
+
+  const isCustom = service.custom === true
+  // custom comments: one comment per line, and the number of lines is the quantity
+  const commentLines = useMemo(() => comments.split('\n').map((l) => l.trim()).filter(Boolean), [comments])
+  const qty = isCustom ? commentLines.length : quantity
 
   const refill = useMemo(() => refillOf(service), [service])
   const guide = useMemo(() => linkGuide(service), [service])
   const tips = useMemo(() => goodToKnow(service), [service])
   const tier = TIERS[service.quality]
 
-  const charge = Math.round(((service.rate * (Number.isFinite(quantity) ? quantity : 0)) / 1000) * 100) / 100
+  const charge = Math.round(((service.rate * (Number.isFinite(qty) ? qty : 0)) / 1000) * 100) / 100
   const insufficient = charge > state.balance
   const fillPct = ((quantity - service.min) / Math.max(1, service.max - service.min)) * 100
 
@@ -64,14 +70,18 @@ function Sheet({ service, onClose }: { service: Service; onClose: () => void }) 
   }, [service])
 
   // reset the "stale" error as soon as the person edits something
-  useEffect(() => setError(''), [link, quantity])
+  useEffect(() => setError(''), [link, quantity, comments])
 
   const submit = async (e: React.FormEvent) => {
     e.preventDefault()
     if (placing) return
     setError('')
+    if (isCustom && (commentLines.length < service.min || commentLines.length > service.max)) {
+      setError(`Add between ${n(service.min)} and ${n(service.max)} comments, one per line.`)
+      return
+    }
     setPlacing(true)
-    const outcome = await placeOrder({ serviceId: service.id, link, quantity, dripfeed: drip })
+    const outcome = await placeOrder({ serviceId: service.id, link, quantity: qty, dripfeed: isCustom ? false : drip, comments })
     setPlacing(false)
     if (!outcome.ok) {
       setError(outcome.error ?? 'Something went wrong.')
@@ -82,6 +92,7 @@ function Sheet({ service, onClose }: { service: Service; onClose: () => void }) 
       setResult(outcome.order)
       toast('Order placed successfully', `#${outcome.order.id} is now in the delivery queue.`)
       setLink('')
+      setComments('')
     }
   }
 
@@ -141,10 +152,10 @@ function Sheet({ service, onClose }: { service: Service; onClose: () => void }) 
         <div className="om-specs">
           <div className="om-spec"><Clock size={16} /><div><span>Start time</span><b>{service.avgTime}</b></div></div>
           <div className={`om-spec refill-${refill.tone}`}><RefreshCw size={16} /><div><span>Refill cover</span><b>{refill.label}</b></div></div>
-          <div className="om-spec"><Users size={16} /><div><span>Minimum order</span><b>{n(service.min)}</b></div></div>
-          <div className="om-spec"><Users size={16} /><div><span>Maximum order</span><b>{n(service.max)}</b></div></div>
+          <div className="om-spec"><Users size={16} /><div><span>{isCustom ? 'Minimum comments' : 'Minimum order'}</span><b>{n(service.min)}</b></div></div>
+          <div className="om-spec"><Users size={16} /><div><span>{isCustom ? 'Maximum comments' : 'Maximum order'}</span><b>{n(service.max)}</b></div></div>
           <div className="om-spec"><Link2 size={16} /><div><span>Link needed</span><b>{guide.need}</b></div></div>
-          <div className="om-spec"><Droplets size={16} /><div><span>Drip-feed</span><b>Available</b></div></div>
+          <div className="om-spec"><Droplets size={16} /><div><span>Drip-feed</span><b>{isCustom ? 'Not available' : 'Available'}</b></div></div>
         </div>
       </section>
 
@@ -173,6 +184,27 @@ function Sheet({ service, onClose }: { service: Service; onClose: () => void }) 
           </div>
         </div>
 
+        {isCustom ? (
+          <div className="field" style={{ marginTop: 16 }}>
+            <label className="label" htmlFor="om-comments">
+              Your comments
+              <span className="hint">One comment per line · {n(service.min)} – {n(service.max)}</span>
+            </label>
+            <textarea
+              id="om-comments"
+              className="textarea"
+              rows={7}
+              value={comments}
+              onChange={(e) => setComments(e.target.value)}
+              placeholder={'Love this!\nAmazing work, keep going\nThis is so helpful'}
+              spellCheck
+              style={{ minHeight: 150, resize: 'vertical' }}
+            />
+            <div className="hint-line" style={{ marginTop: 6 }}>
+              <b>{n(commentLines.length)}</b> comment{commentLines.length === 1 ? '' : 's'} · you pay per comment
+            </div>
+          </div>
+        ) : (
         <div className="field" style={{ marginTop: 16 }}>
           <label className="label" htmlFor="om-qty">
             Quantity
@@ -215,7 +247,9 @@ function Sheet({ service, onClose }: { service: Service; onClose: () => void }) 
             ))}
           </div>
         </div>
+        )}
 
+        {isCustom ? null : (
         <div className="switch-row" style={{ marginTop: 14, paddingBottom: 0 }}>
           <div>
             <div className="t">Drip-feed delivery</div>
@@ -223,10 +257,11 @@ function Sheet({ service, onClose }: { service: Service; onClose: () => void }) 
           </div>
           <Switch on={drip} onChange={setDrip} label="Enable drip-feed delivery" />
         </div>
+        )}
 
         <div className="om-sum">
           <div className="summary-line"><span>Rate per 1,000</span><b>{formatINR(service.rate)}</b></div>
-          <div className="summary-line"><span>Quantity</span><b>{Number.isFinite(quantity) ? n(quantity) : '—'}</b></div>
+          <div className="summary-line"><span>{isCustom ? 'Comments' : 'Quantity'}</span><b>{Number.isFinite(qty) ? n(qty) : '—'}</b></div>
           <div className="summary-line"><span>Start time</span><b>{service.avgTime}</b></div>
           <div className="summary-line"><span>Service fee</span><b style={{ color: '#047857' }}>Free</b></div>
           <div className="summary-line"><span>Balance after</span><b style={{ color: insufficient ? '#be123c' : undefined }}>{formatINR(Math.max(0, state.balance - charge))}</b></div>

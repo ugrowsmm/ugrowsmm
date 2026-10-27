@@ -4,6 +4,8 @@ import { ArrowRight, Check, ChevronDown, Clock, Crown, RefreshCw, Search, Star, 
 import { useStore } from '../lib/store'
 import {
   PLATFORM_LABEL,
+  categoryRank,
+  isCountryCategory,
   SERVICES,
   TIERS,
   TIER_ORDER,
@@ -24,7 +26,8 @@ const CLS: Record<Quality, string> = { Standard: 'std', Premium: 'pre', Pro: 'pr
 const PAGE = 12
 const n = (v: number) => v.toLocaleString('en-IN')
 
-const PLATFORMS: Platform[] = Array.from(new Set(SERVICES.map((s) => s.platform)))
+// platform dropdowns follow the order of PLATFORM_LABEL (Instagram, YouTube, Facebook, Snapchat, Spotify ...)
+const PLATFORMS: Platform[] = (Object.keys(PLATFORM_LABEL) as Platform[]).filter((p) => SERVICES.some((s) => s.platform === p))
 
 /**
  * One catalog for the whole panel. /services and /new-order both render this, so every
@@ -83,7 +86,11 @@ export default function ServiceCatalog({ variant }: { variant: 'services' | 'ord
     () =>
       PLATFORMS.map((p) => {
         const list = inTier.filter((s) => s.platform === p)
-        const sorted = sort === 'recommended' ? list : [...list].sort((a, b) => (sort === 'price-asc' ? a.rate - b.rate : b.rate - a.rate))
+        // recommended = service types first (followers, likes, repost, views, shares, growth), country-wise groups last
+        const sorted =
+          sort === 'recommended'
+            ? [...list].sort((a, b) => categoryRank(a.category) - categoryRank(b.category))
+            : [...list].sort((a, b) => (sort === 'price-asc' ? a.rate - b.rate : b.rate - a.rate))
         return { p, list: sorted, from: list.length ? Math.min(...list.map((s) => s.rate)) : 0 }
       }).filter((g) => g.list.length > 0),
     [inTier, sort],
@@ -243,11 +250,15 @@ function PlatformAccordion({
 
   const cats = useMemo(() => {
     const m = new Map<string, number>()
-    list.forEach((s) => m.set(s.category, (m.get(s.category) ?? 0) + 1))
-    return Array.from(m.entries())
+    list.forEach((s) => {
+      m.set(s.category, (m.get(s.category) ?? 0) + 1)
+      if (s.country === 'India') m.set('🇮🇳 India', (m.get('🇮🇳 India') ?? 0) + 1) // Indian services also get their own chip
+    })
+    return Array.from(m.entries()).sort((a, b) => categoryRank(a[0]) - categoryRank(b[0]))
   }, [list])
 
-  const filtered = cat === 'All' ? list : list.filter((s) => s.category === cat)
+  const filtered =
+    cat === 'All' ? list : list.filter((s) => s.category === cat || (isCountryCategory(cat) && s.country !== undefined && cat.endsWith(s.country)))
   const visible = filtered.slice(0, limit)
 
   return (

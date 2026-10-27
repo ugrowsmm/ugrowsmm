@@ -1,30 +1,20 @@
+/** The UGrowSMM mark (white "U" with the blue growth arrow). Sits on an orange .brand-mark tile. */
 export function LogoGlyph({ size = 24 }: { size?: number }) {
   return (
-    <svg
+    <img
+      src="/icons/glyph.png?v=3"
       width={size}
       height={size}
-      viewBox="0 0 64 64"
-      fill="none"
+      alt=""
       aria-hidden="true"
-      focusable="false"
-    >
-      <path
-        d="M20 17v15.5c0 8 5.4 13 12 13s12-5 12-13V17"
-        stroke="#ffffff"
-        strokeWidth="6"
-        strokeLinecap="round"
-      />
-      <path
-        d="M42.5 31 52 19M52 19h-8.5M52 19v8.5"
-        stroke="#0ea5e9"
-        strokeWidth="4.2"
-        strokeLinecap="round"
-        strokeLinejoin="round"
-      />
-    </svg>
+      decoding="async"
+      draggable={false}
+      style={{ display: 'block' }}
+    />
   )
 }
 
+/** "UGrow" in the ink colour of its surroundings + "SMM" in the logo blue. */
 export function Wordmark() {
   return (
     <span className="brand-name">

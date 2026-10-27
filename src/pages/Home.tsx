@@ -64,7 +64,7 @@ const FAQS = [
   },
   {
     q: 'What happens if an order under-delivers?',
-    a: 'Open the order in your history and contact support with the order ID. We will restart, refill or refund the undelivered portion depending on the service and verification. Full details are in our Refund Policy.',
+    a: 'Open the order in your history and raise a ticket from the Support page with the order ID. We will restart, refill or refund the undelivered portion depending on the service and verification. Full details are in our Refund Policy.',
   },
   {
     q: 'Can agencies and resellers automate orders?',
@@ -451,8 +451,8 @@ export default function Home() {
               <h2>Questions, answered.</h2>
             </div>
             <p className="mkt-head-note">
-              Everything you need before your first order. Still unsure? The support team answers
-              within one business day.
+              Everything you need before your first order. Still unsure? Raise a ticket from the Support page and
+              we answer within one business day.
             </p>
           </div>
 

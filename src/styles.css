@@ -6520,10 +6520,11 @@ html{scrollbar-gutter:stable}
    Crisp outlines: one thin, theme-matched border on every block
    ============================================================ */
 :root{
-  --outline:#d6dce6;
-  --outline-strong:#bcc5d3;
-  --outline-orange:rgba(249,115,22,.42);
-  --outline-sky:rgba(14,165,233,.4);
+  --outline:rgba(249,115,22,.3);
+  --outline-strong:rgba(249,115,22,.42);
+  --outline-orange:rgba(249,115,22,.3);
+  --outline-sky:rgba(249,115,22,.3);
+  --outline-hover:rgba(249,115,22,.62);
   --shadow-card:0 1px 2px rgba(16,24,40,.06),0 10px 22px -18px rgba(16,24,40,.3);
 }
 body{-webkit-font-smoothing:antialiased;-moz-osx-font-smoothing:grayscale;text-rendering:optimizeLegibility}
@@ -6563,8 +6564,12 @@ body{-webkit-font-smoothing:antialiased;-moz-osx-font-smoothing:grayscale;text-r
 /* interactive blocks: outline warms up on hover */
 .service-card:hover,.platform-tile:hover,.quick-action:hover,.mkt-feature:hover,.mkt-step:hover,
 .mkt-review:hover,.cg-card:hover,.order-card:hover,.rv-card:hover,.mkt-platform:hover{
-  border-color:var(--outline-orange);
+  border-color:var(--outline-hover);
 }
 
 /* page chrome: header, footer, sidebar edges */
 .mkt-header,.app-footer,.sidebar,.topbar{border-color:var(--outline)}
+
+/* orange-only: remaining floating blocks follow the same outline */
+.mkt-trust-pill,.mkt-float,.toast,.popover,.upi-method,.bn-fab .fab{border-color:var(--outline-strong)}
+.bb-feats li+li,.mkt-num+.mkt-num{border-left-color:var(--outline)}

@@ -121,6 +121,7 @@ interface StoreValue {
   adminCredit: (kind: 'paid' | 'unpaid', amount: number) => void
   adminDemoOrders: (count: number) => void
   adminReferralEarning: (amount: number) => void
+  adminDebit: (kind: 'paid' | 'unpaid', amount: number) => void
   setCashback: (code: string, percent: number) => void
   addTicket: (ticket: Ticket) => void
   syncTickets: (rows: Ticket[]) => void
@@ -503,6 +504,15 @@ export function StoreProvider({ children }: { children: ReactNode }) {
     }))
   }, [])
 
+  const adminDebit = useCallback((kind: 'paid' | 'unpaid', amount: number) => {
+    setState((prev) => ({
+      ...prev,
+      balance: kind === 'paid' ? Math.max(0, Math.round((prev.balance - amount) * 100) / 100) : prev.balance,
+      unpaid: kind === 'unpaid' ? Math.max(0, Math.round((prev.unpaid - amount) * 100) / 100) : prev.unpaid,
+      transactions: [{ id: 'TX-' + Math.floor(5600 + Math.random() * 300), type: 'adjustment', label: kind === 'paid' ? 'Wallet adjustment' : 'Promo credit removed', amount, createdAt: new Date().toISOString(), method: 'Admin' }, ...prev.transactions],
+    }))
+  }, [])
+
   const adminDemoOrders = useCallback((count: number) => {
     const picks = [...SERVICES].sort(() => Math.random() - 0.5).slice(0, count)
     const demo: Order[] = picks.map((svc) => {
@@ -626,6 +636,7 @@ export function StoreProvider({ children }: { children: ReactNode }) {
       adminCredit,
       adminDemoOrders,
       adminReferralEarning,
+      adminDebit,
       setCashback,
       addTicket,
       syncTickets,
@@ -656,6 +667,7 @@ export function StoreProvider({ children }: { children: ReactNode }) {
       adminCredit,
       adminDemoOrders,
       adminReferralEarning,
+      adminDebit,
       setCashback,
       addTicket,
       syncTickets,

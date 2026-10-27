@@ -1852,10 +1852,31 @@ h4 {
   border-color: rgba(225, 29, 72, 0.28);
   color: #b91c1c;
 }
-.platform-tile.tiktok {
-  background: rgba(56, 189, 248, 0.1);
-  border-color: rgba(56, 189, 248, 0.25);
-  color: #0369a1;
+.platform-tile.snapchat {
+  background: rgba(250, 204, 21, 0.2);
+  border-color: rgba(202, 138, 4, 0.35);
+  color: #a16207;
+}
+.platform-tile.jiosaavn {
+  background: rgba(20, 184, 166, 0.13);
+  border-color: rgba(20, 184, 166, 0.3);
+  color: #0f766e;
+}
+.platform-tile.website {
+  background: rgba(99, 102, 241, 0.12);
+  border-color: rgba(99, 102, 241, 0.28);
+  color: #4f46e5;
+}
+.platform-tile.threads,
+.platform-tile.kick,
+.platform-tile.twitch,
+.platform-tile.pinterest,
+.platform-tile.soundcloud,
+.platform-tile.linkedin,
+.platform-tile.whatsapp {
+  background: rgba(139, 92, 246, 0.11);
+  border-color: rgba(139, 92, 246, 0.26);
+  color: #6d28d9;
 }
 .platform-tile.x {
   background: rgba(16, 24, 40, 0.08);

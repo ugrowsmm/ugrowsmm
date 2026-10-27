@@ -16,6 +16,27 @@ export type Platform =
   | 'kick'
   | 'soundcloud'
   | 'pinterest'
+  | 'audiomack'
+  | 'trovo'
+  | 'vk'
+  | 'kwai'
+  | 'likee'
+  | 'reddit'
+  | 'tumblr'
+  | 'deezer'
+  | 'tidal'
+  | 'quora'
+  | 'vimeo'
+  | 'mixcloud'
+  | 'dailymotion'
+  | 'behance'
+  | 'shazam'
+  | 'clubhouse'
+  | 'okru'
+  | 'coub'
+  | 'imdb'
+  | 'shopee'
+  | 'reverbnation'
 
 export type OrderStatus = 'In progress' | 'Completed' | 'Partial' | 'Canceled' | 'Pending'
 
@@ -35,6 +56,8 @@ export interface Service {
   description: string
   /** Set on country-targeted services (shown under the country chips, always last). */
   country?: string
+  /** Custom-comments service: the buyer types one comment per line and the quantity is the line count. */
+  custom?: boolean
 }
 
 export interface Order {
@@ -80,14 +103,35 @@ export const PLATFORM_LABEL: Record<Platform, string> = {
   kick: 'Kick',
   soundcloud: 'SoundCloud',
   pinterest: 'Pinterest',
+  audiomack: 'Audiomack',
+  trovo: 'Trovo',
+  vk: 'VK',
+  kwai: 'Kwai',
+  likee: 'Likee',
+  reddit: 'Reddit',
+  tumblr: 'Tumblr',
+  deezer: 'Deezer',
+  tidal: 'Tidal',
+  quora: 'Quora',
+  vimeo: 'Vimeo',
+  mixcloud: 'Mixcloud',
+  dailymotion: 'Dailymotion',
+  behance: 'Behance',
+  shazam: 'Shazam',
+  clubhouse: 'Clubhouse',
+  okru: 'OK.ru',
+  coub: 'Coub',
+  imdb: 'IMDb',
+  shopee: 'Shopee',
+  reverbnation: 'ReverbNation',
 }
 
 /** Chip order inside a platform dropdown: service types first, country-wise groups always last. */
 const TYPE_ORDER = [
-  'Followers', 'Subscribers', 'Members', 'Likes', 'Repost', 'Views', 'Shares', 'Comments',
+  'Followers', 'Subscribers', 'Members', 'Likes', 'Repost', 'Views', 'Live Views', 'Shares', 'Comments',
   'Plays', 'Saves', 'Traffic', 'Watch time', 'Watch hours', 'Reactions', 'Growth',
 ]
-const COUNTRY_ORDER = ['USA', 'India', 'Saudi Arabia', 'Gulf']
+const COUNTRY_ORDER = ['USA', 'India', 'UK', 'Arab', 'Saudi Arabia', 'Gulf']
 /** Country categories are written with a leading flag emoji, e.g. "🇺🇸 USA". */
 export const isCountryCategory = (c: string) => (c.codePointAt(0) ?? 0) > 0x1f000
 export const categoryRank = (c: string) => {

@@ -1,12 +1,21 @@
 import synced from './catalog.generated.json'
 export type Platform =
   | 'instagram'
-  | 'tiktok'
   | 'youtube'
-  | 'x'
   | 'facebook'
-  | 'telegram'
+  | 'snapchat'
   | 'spotify'
+  | 'jiosaavn'
+  | 'website'
+  | 'telegram'
+  | 'x'
+  | 'threads'
+  | 'whatsapp'
+  | 'linkedin'
+  | 'twitch'
+  | 'kick'
+  | 'soundcloud'
+  | 'pinterest'
 
 export type OrderStatus = 'In progress' | 'Completed' | 'Partial' | 'Canceled' | 'Pending'
 
@@ -24,6 +33,8 @@ export interface Service {
   quality: Quality
   badge?: string
   description: string
+  /** Set on country-targeted services (shown under the country chips, always last). */
+  country?: string
 }
 
 export interface Order {
@@ -54,21 +65,47 @@ export interface Transaction {
 
 export const PLATFORM_LABEL: Record<Platform, string> = {
   instagram: 'Instagram',
-  tiktok: 'TikTok',
   youtube: 'YouTube',
-  x: 'X / Twitter',
   facebook: 'Facebook',
-  telegram: 'Telegram',
+  snapchat: 'Snapchat',
   spotify: 'Spotify',
+  jiosaavn: 'JioSaavn',
+  website: 'Website Traffic',
+  telegram: 'Telegram',
+  x: 'X / Twitter',
+  threads: 'Threads',
+  whatsapp: 'WhatsApp',
+  linkedin: 'LinkedIn',
+  twitch: 'Twitch',
+  kick: 'Kick',
+  soundcloud: 'SoundCloud',
+  pinterest: 'Pinterest',
 }
 
-/** Three grades of service: Standard (budget), Premium (celebrity grade), Pro (Bollywood grade). */
+/** Chip order inside a platform dropdown: service types first, country-wise groups always last. */
+const TYPE_ORDER = [
+  'Followers', 'Subscribers', 'Members', 'Likes', 'Repost', 'Views', 'Shares', 'Comments',
+  'Plays', 'Saves', 'Traffic', 'Watch time', 'Watch hours', 'Reactions', 'Growth',
+]
+const COUNTRY_ORDER = ['USA', 'India', 'Saudi Arabia', 'Gulf']
+/** Country categories are written with a leading flag emoji, e.g. "🇺🇸 USA". */
+export const isCountryCategory = (c: string) => (c.codePointAt(0) ?? 0) > 0x1f000
+export const categoryRank = (c: string) => {
+  if (isCountryCategory(c)) {
+    const i = COUNTRY_ORDER.findIndex((n) => c.endsWith(n))
+    return 100 + (i < 0 ? COUNTRY_ORDER.length : i)
+  }
+  const i = TYPE_ORDER.indexOf(c)
+  return i < 0 ? 50 : i
+}
+
+/** Three grades of service: Standard (everyday quality), Premium (celebrity grade), Pro (Bollywood grade). */
 export const TIERS: Record<Quality, { grade: string; headline: string; blurb: string; perks: string[] }> = {
   Standard: {
-    grade: 'Budget friendly',
-    headline: 'Smart boosts at the lowest rates',
-    blurb: 'Everyday growth for testing a new page, warming up a fresh upload or going big on volume without a big bill.',
-    perks: ['Lowest price per 1,000', 'Fast start on most orders', 'Ideal for bulk and testing'],
+    grade: 'Everyday quality',
+    headline: 'Reliable boosts for everyday growth',
+    blurb: 'Dependable growth for a fresh page, a new upload or a steady push. Good sources, quick starts and honest delivery.',
+    perks: ['Quick start on most orders', 'Natural, gradual delivery', 'Great for everyday boosts'],
   },
   Premium: {
     grade: 'Celebrity grade',
@@ -95,7 +132,7 @@ const svc = (
 const CURATED: Service[] = [
   // ---------- Instagram ----------
   svc('ig-reel-views', 'instagram', 'Views', 'Reel & Video Views', 0.25, 100, 10000000, '0–30 min', 'Standard',
-    'Give every new reel a busy first hour. Views land fast on any public link, so your content looks alive the moment it goes up.', 'Best value'),
+    'Give every new reel a busy first hour. Views land fast on any public link, so your content looks alive the moment it goes up.'),
   svc('ig-likes', 'instagram', 'Likes', 'Post Likes · Low drop', 4.73, 50, 500000, '0–30 min', 'Standard',
     'Real-looking likes with a low drop rate. Add visible proof to your best posts and keep first-time visitors on your profile a little longer.'),
   svc('ig-followers', 'instagram', 'Followers', 'Followers · 365-day refill', 52.73, 100, 100000, '1–24 hrs', 'Premium',
@@ -147,7 +184,6 @@ export const MARKUP = 5
 /** Referral welcome bonus: free Instagram views on the first qualifying top-up. */
 export const BONUS_VIEWS = 50000
 export const BONUS_MIN_TOPUP = 100
-export const BONUS_SERVICE_ID = 'ig-reel-views'
 
 // Run `npm run sync:services` to replace the curated list with your provider's full catalog.
 const SYNCED = synced as unknown as Service[]
@@ -158,6 +194,12 @@ export const SERVICES: Service[] = SOURCE.map((s) => ({
   ...s,
   rate: Math.round(s.rate * MARKUP * 100) / 100,
 }))
+
+/** Free-views bonus uses the curated reel-views service, or the cheapest Instagram views service of a synced catalog. */
+export const BONUS_SERVICE_ID =
+  SERVICES.find((x) => x.id === 'ig-reel-views')?.id ??
+  [...SERVICES].filter((x) => x.platform === 'instagram' && x.category === 'Views' && !x.country).sort((a, b) => a.rate - b.rate)[0]?.id ??
+  'ig-reel-views'
 
 export const CHART_POINTS = [420, 380, 510, 470, 620, 590, 720, 680, 810, 760, 920, 860, 1040, 1180]
 

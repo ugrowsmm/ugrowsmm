@@ -22,6 +22,7 @@ import {
   PLATFORM_LABEL,
   SERVICES,
   formatFrom,
+  startingRate,
   type Platform,
 } from '../lib/data'
 import { PlatformIcon } from '../components/PlatformIcon'
@@ -209,7 +210,7 @@ export default function Home() {
 
               <div className="mkt-mock-orders">
                 {MOCK_ORDERS.map((order) => {
-                  const from = Math.min(...SERVICES.filter((x) => x.platform === order.platform && x.mode !== 'package').map((x) => x.rate))
+                  const from = startingRate(SERVICES.filter((x) => x.platform === order.platform))
                   return (
                     <div className="mkt-mock-row" key={order.name}>
                       <span className={`platform-tile ${order.platform}`} style={{ width: 30, height: 30 }}>
@@ -219,7 +220,7 @@ export default function Home() {
                         <div className="n">{order.name}</div>
                         <div className="tiny faint">Starts within minutes</div>
                       </div>
-                      <span className="pct">{Number.isFinite(from) ? `From ${formatFrom(from)}/1K` : ''}</span>
+                      <span className="pct">{from > 0 ? `From ${formatFrom(from)}/1K` : ''}</span>
                     </div>
                   )
                 })}

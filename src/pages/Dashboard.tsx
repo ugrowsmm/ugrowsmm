@@ -18,6 +18,7 @@ import {
   PLATFORM_LABEL,
   SERVICES,
   formatINR,
+  formatFrom,
   timeAgo,
   type Order,
 } from '../lib/data'
@@ -471,7 +472,7 @@ export default function Dashboard() {
               </div>
               <div className="bottom">
                 <div className="rate">
-                  {formatINR(service.rate, 0)} <span>/ 1k</span>
+                  {formatFrom(service.rate)} <span>/ 1k</span>
                 </div>
                 <span className="badge badge-violet">
                   Order <ArrowUpRight />

@@ -74,7 +74,7 @@ export default function ServiceCatalog({ variant }: { variant: 'services' | 'ord
       TIER_ORDER.map((t) => {
         const all = SERVICES.filter((s) => s.quality === t)
         const shown = all.filter(matches)
-        return { t, total: all.length, shown: shown.length, from: all.length ? Math.min(...all.map((s) => s.rate)) : 0 }
+        return { t, total: all.length, shown: shown.length, from: all.length ? Math.min(...all.filter((s) => s.mode !== 'package').map((s) => s.rate), Infinity) % Infinity || Math.min(...all.map((s) => s.rate)) : 0 }
       }),
     // eslint-disable-next-line react-hooks/exhaustive-deps
     [q],
@@ -91,7 +91,7 @@ export default function ServiceCatalog({ variant }: { variant: 'services' | 'ord
           sort === 'recommended'
             ? [...list].sort((a, b) => categoryRank(a.category) - categoryRank(b.category))
             : [...list].sort((a, b) => (sort === 'price-asc' ? a.rate - b.rate : b.rate - a.rate))
-        return { p, list: sorted, from: list.length ? Math.min(...list.map((s) => s.rate)) : 0 }
+        return { p, list: sorted, from: list.length ? Math.min(...list.filter((s) => s.mode !== 'package').map((s) => s.rate), Infinity) % Infinity || Math.min(...list.map((s) => s.rate)) : 0 }
       }).filter((g) => g.list.length > 0),
     [inTier, sort],
   )
@@ -109,7 +109,10 @@ export default function ServiceCatalog({ variant }: { variant: 'services' | 'ord
     <div className="page">
       <div className="page-head">
         <div>
-          <span className="eyebrow">{variant === 'order' ? 'Order studio' : 'Services'}</span>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 10, flexWrap: 'wrap' }}>
+            <span className="eyebrow">{variant === 'order' ? 'Order studio' : 'Services'}</span>
+            <span className="badge badge-lime">{n(SERVICES.length)} services in total</span>
+          </div>
           <h1>{variant === 'order' ? 'Launch a new order' : 'Pick your growth grade'}</h1>
           <p>
             {variant === 'order'
@@ -142,7 +145,7 @@ export default function ServiceCatalog({ variant }: { variant: 'services' | 'ord
               <span className="cg-tab-name">{t}</span>
               <span className="cg-tab-grade">{TIERS[t].grade}</span>
               <span className="cg-tab-from">from {formatFrom(from)}<small>/1k</small></span>
-              <span className="cg-tab-count">{searching ? `${shown} match${shown === 1 ? '' : 'es'}` : `${total} services`}</span>
+              <span className="cg-tab-count" style={{ display: 'block' }}>{searching ? `${shown} match${shown === 1 ? '' : 'es'}` : `${total} services`}</span>
               <span className="cg-tab-check" aria-hidden="true"><Check size={13} /></span>
             </button>
           )
@@ -320,11 +323,11 @@ function ServiceCard({ s, onPick }: { s: Service; onPick: (s: Service) => void }
       <span className="cg-card-desc">{s.description}</span>
       <span className="svc-meta">
         <span><Clock size={13} /> {s.avgTime}</span>
-        <span><Zap size={13} /> {n(s.min)} – {n(s.max)}</span>
+        <span><Zap size={13} /> {s.mode === 'package' ? 'Fixed package' : s.mode === 'auto' ? `${n(s.min)} – ${n(s.max)} per post` : n(s.min) + ' – ' + n(s.max)}</span>
         <span className={`cg-refill ${refill.tone}`}><RefreshCw size={13} /> {refill.tone === 'none' ? 'No refill' : `Refill · ${refill.label}`}</span>
       </span>
       <span className="cg-card-foot">
-        <span className="rate">{formatINR(s.rate)} <small>/ 1,000</small></span>
+        <span className="rate">{formatINR(s.rate)} <small>{s.mode === 'package' ? '/ package' : '/ 1,000'}</small></span>
         <span className="btn btn-primary btn-sm">Order <ArrowRight /></span>
       </span>
     </button>

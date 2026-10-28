@@ -22,7 +22,7 @@ import {
   User,
 } from 'lucide-react'
 import { useStore, type AccountProfile } from '../lib/store'
-import { PLATFORM_LABEL, SERVICES, formatINR } from '../lib/data'
+import { PLATFORM_LABEL, SERVICES, formatFrom } from '../lib/data'
 import { PlatformIcon } from '../components/PlatformIcon'
 import { LogoGlyph, Wordmark } from '../components/Logo'
 import InstallButton from '../components/InstallButton'
@@ -264,7 +264,7 @@ export default function Login() {
               <span className="badge badge-green">Instant start</span>
             </div>
             {(['instagram', 'youtube', 'facebook'] as const).map((p) => {
-              const from = Math.min(...SERVICES.filter((x) => x.platform === p).map((x) => x.rate))
+              const from = Math.min(...SERVICES.filter((x) => x.platform === p && x.mode !== 'package').map((x) => x.rate))
               return (
                 <div className="ap-row" key={p}>
                   <span className={`platform-tile ${p}`} style={{ width: 30, height: 30, borderRadius: 9 }}>
@@ -274,7 +274,7 @@ export default function Login() {
                     <div className="ap-name">{PLATFORM_LABEL[p]}</div>
                     <div className="tiny faint">Starts within minutes</div>
                   </div>
-                  <span className="ap-price">{Number.isFinite(from) ? `From ${formatINR(from, 0)}/1K` : ''}</span>
+                  <span className="ap-price">{Number.isFinite(from) ? `From ${formatFrom(from)}/1K` : ''}</span>
                 </div>
               )
             })}

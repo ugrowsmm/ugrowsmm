@@ -162,8 +162,10 @@ export const categoryRank = (c: string) => {
     const i = COUNTRY_ORDER.findIndex((n) => c.endsWith(n))
     return 100 + (i < 0 ? COUNTRY_ORDER.length : i)
   }
-  const i = TYPE_ORDER.indexOf(c)
-  return i < 0 ? 50 : i
+  // "Comments Packages" sits right after "Comments"
+  const isPack = c.endsWith(' Packages')
+  const i = TYPE_ORDER.indexOf(isPack ? c.slice(0, -' Packages'.length) : c)
+  return i < 0 ? 50 : isPack ? i + 0.5 : i
 }
 
 /** Three grades of service: Standard (everyday quality), Premium (celebrity grade), Pro (Bollywood grade). */

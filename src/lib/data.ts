@@ -37,6 +37,11 @@ export type Platform =
   | 'imdb'
   | 'shopee'
   | 'reverbnation'
+  | 'steam'
+  | 'trustpilot'
+  | 'tripadvisor'
+  | 'googlemaps'
+  | 'discord'
 
 export type OrderStatus = 'In progress' | 'Completed' | 'Partial' | 'Canceled' | 'Pending'
 
@@ -56,8 +61,20 @@ export interface Service {
   description: string
   /** Set on country-targeted services (shown under the country chips, always last). */
   country?: string
-  /** Custom-comments service: the buyer types one comment per line and the quantity is the line count. */
-  custom?: boolean
+  /** Service type used for the dropdown chips (Followers, Likes, Auto Boost ...). */
+  ty?: string
+  /**
+   * How the service is ordered. Left out = link + quantity.
+   * package  : fixed bundle at one flat price (rate is the price of the whole package)
+   * comments : the buyer types one comment per line, the line count is the quantity
+   * list     : the buyer pastes a list (usernames etc.), one per line, the line count is the quantity
+   * poll     : link + quantity + the poll answer number
+   * auto     : subscription, boosts every new post (username, quantity range, number of posts, delay)
+   * note     : link + quantity + a message or instructions
+   */
+  mode?: 'package' | 'comments' | 'list' | 'poll' | 'auto' | 'note'
+  /** Package that needs the buyer's own comment text: exactly this many lines. */
+  lines?: number
 }
 
 export interface Order {
@@ -124,12 +141,18 @@ export const PLATFORM_LABEL: Record<Platform, string> = {
   imdb: 'IMDb',
   shopee: 'Shopee',
   reverbnation: 'ReverbNation',
+  steam: 'Steam',
+  trustpilot: 'Trustpilot',
+  tripadvisor: 'TripAdvisor',
+  googlemaps: 'Google Maps',
+  discord: 'Discord',
 }
 
 /** Chip order inside a platform dropdown: service types first, country-wise groups always last. */
 const TYPE_ORDER = [
   'Followers', 'Subscribers', 'Members', 'Likes', 'Repost', 'Views', 'Live Views', 'Shares', 'Comments',
   'Plays', 'Saves', 'Traffic', 'Watch time', 'Watch hours', 'Reactions', 'Growth',
+  'Auto Boost', 'Reviews', 'Mentions', 'Poll Votes', 'Direct Messages', 'Data Scraper', 'Reports', 'Other',
 ]
 const COUNTRY_ORDER = ['USA', 'India', 'UK', 'Arab', 'Saudi Arabia', 'Gulf']
 /** Country categories are written with a leading flag emoji, e.g. "🇺🇸 USA". */
@@ -233,11 +256,62 @@ export const BONUS_MIN_TOPUP = 100
 const SYNCED = synced as unknown as Service[]
 const SOURCE = SYNCED.length ? SYNCED : CURATED
 
-/** What users see: provider cost x MARKUP. */
+const BASE_TEXT: Record<string, string> = {
+  Followers: 'Profiles that follow your account, added at a steady pace so growth looks natural.',
+  Subscribers: 'Subscribers added gradually to your channel for a believable, steady climb.',
+  Members: 'Members joining your channel or group so it looks active from the first visit.',
+  Likes: 'Visible likes on your post, added quickly so new visitors see proof right away.',
+  Repost: 'Reposts that push your content to more feeds and make it look worth passing on.',
+  Views: 'Views on your video or post, so every new upload gets a busy first hour.',
+  'Live Views': 'Live viewers for your stream, so it looks busy while it is on air.',
+  Shares: 'Share counts that show your content is worth passing on.',
+  Comments: 'Comments that add life under your post. Billed per comment.',
+  Plays: 'Plays on your track or playlist to lift its numbers and discovery.',
+  Saves: 'Saves on your content, a strong signal that it is worth coming back to.',
+  Reactions: 'Reactions on your post to boost visible engagement.',
+  'Watch time': 'Watch hours for creators aiming at the monetisation mark. Quantity is in hours.',
+  Traffic: 'Visitors sent to your website link, delivered gradually over time.',
+  Growth: 'A combined growth bundle that lifts several numbers together.',
+  'Auto Boost': 'Set it once and every new post you publish is boosted automatically.',
+  Reviews: 'Reviews and ratings for your page or listing.',
+  Mentions: 'Mentions that put your account in front of more people.',
+  'Poll Votes': 'Votes for your poll. Tell us which answer number to vote for.',
+  'Direct Messages': 'Direct messages sent to a targeted audience.',
+  'Data Scraper': 'Public data collected for you from the link you give.',
+  Reports: 'Reports filed on the link you give.',
+  Other: 'A specialist service for the link you give.',
+}
+const MODE_TEXT: Record<string, string> = {
+  package: 'A ready-made package at one flat price, so there is no quantity to choose.',
+  auto: 'Choose how many new posts to cover and how much each post gets.',
+  comments: 'Write your own comments, one per line. You pay per comment.',
+  list: 'Paste your list, one entry per line. You pay per entry.',
+  poll: 'Tell us which answer number to vote for.',
+  note: 'Add a short message or instructions and we take it from there.',
+}
+/** Plain-English description built from the service itself, so the catalog file stays small. */
+const describe = (s: Service): string => {
+  if (s.description) return s.description
+  const days = s.name.match(/(\d{1,3})-day refill/i)?.[1]
+  return [
+    s.mode && MODE_TEXT[s.mode] ? MODE_TEXT[s.mode] : BASE_TEXT[s.ty ?? 'Other'],
+    /lifetime refill/i.test(s.name) ? 'Backed by lifetime refill cover.' : days ? `Backed by ${days}-day refill cover.` : '',
+    /non-drop/i.test(s.name) ? 'Built to hold, with no drop expected.' : /low drop/i.test(s.name) ? 'Low drop rate.' : '',
+    s.country ? `Targeted to ${s.country} audiences.` : '',
+  ].filter(Boolean).join(' ')
+}
+
+/** What users see: provider cost x MARKUP (5x). */
 export const SERVICES: Service[] = SOURCE.map((s) => ({
   ...s,
   rate: Math.round(s.rate * MARKUP * 100) / 100,
+  description: describe(s),
 }))
+
+/** Packages are priced per package; everything else per 1,000. */
+export const isPackage = (s: Pick<Service, 'mode'>) => s.mode === 'package'
+export const priceOf = (s: Pick<Service, 'mode' | 'rate'>, quantity: number) =>
+  isPackage(s) ? s.rate : Math.round(((s.rate * (Number.isFinite(quantity) ? quantity : 0)) / 1000) * 100) / 100
 
 /** Free-views bonus uses the curated reel-views service, or the cheapest Instagram views service of a synced catalog. */
 export const BONUS_SERVICE_ID =

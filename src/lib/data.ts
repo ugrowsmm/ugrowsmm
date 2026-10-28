@@ -150,9 +150,9 @@ export const PLATFORM_LABEL: Record<Platform, string> = {
 
 /** Chip order inside a platform dropdown: service types first, country-wise groups always last. */
 const TYPE_ORDER = [
-  'Followers', 'Subscribers', 'Members', 'Likes', 'Repost', 'Views', 'Live Views', 'Shares', 'Comments',
+  'Followers', 'Subscribers', 'Members', 'Likes', 'Repost', 'Views', 'Live Views', 'Shares', 'Comments', 'Custom Comments',
   'Plays', 'Saves', 'Traffic', 'Watch time', 'Watch hours', 'Reactions', 'Growth',
-  'Auto Boost', 'Reviews', 'Mentions', 'Poll Votes', 'Direct Messages', 'Data Scraper', 'Reports', 'Other',
+  'Auto Boost', 'Reviews', 'Mentions', 'Poll Votes', 'Direct Messages', 'Data Scraper', 'Reports', 'Packages', 'Other',
 ]
 const COUNTRY_ORDER = ['USA', 'India', 'UK', 'Arab', 'Saudi Arabia', 'Gulf']
 /** Country categories are written with a leading flag emoji, e.g. "🇺🇸 USA". */

@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useState } from 'react'
 import { Link, Navigate } from 'react-router-dom'
 import { canAccessAdmin } from '../lib/admins'
-import { ArrowLeft, CheckCircle2, Clock, Gift, Lock, Minus, Percent, RotateCcw, Search, Trash2, Wallet, XCircle } from 'lucide-react'
+import { ArrowLeft, CheckCircle2, Clock, Gift, Lock, Percent, RotateCcw, Search, Trash2, Wallet, XCircle } from 'lucide-react'
 import { REFERRAL_PERCENT_DEFAULT, useStore } from '../lib/store'
 import { rpc, apiReady } from '../lib/api'
 import { formatINR, timeAgo, type OrderStatus } from '../lib/data'
@@ -32,6 +32,17 @@ const normPayoutStatus = (v: unknown): AdminPayout['status'] => {
 }
 const isStuck = (o: AdminOrder) => (o.status === 'Pending' || o.status === 'In progress') && Date.now() - new Date(o.createdAt).getTime() > STUCK_AFTER_HOURS * 3.6e6
 
+/** Add / Cut pill switch inside the Funds and Referral popups (same style as the Sign In / Sign Up switch) */
+const ADM_SWITCH_CSS = `
+.adm-switch{position:relative;display:grid;grid-template-columns:1fr 1fr;padding:5px;border-radius:999px;background:var(--panel-3,#f1f5f9);border:1px solid rgba(249,115,22,.3);box-shadow:inset 0 1px 2px rgba(16,24,40,.05)}
+.adm-switch-thumb{position:absolute;top:5px;bottom:5px;left:5px;width:calc(50% - 5px);border-radius:999px;background:var(--grad,linear-gradient(115deg,#fb923c,#f97316 48%,#ea580c));box-shadow:0 10px 22px -10px rgba(249,115,22,.65);transition:transform .38s cubic-bezier(.22,1,.36,1),background .3s}
+.adm-switch[data-active="cut"] .adm-switch-thumb{transform:translateX(100%);background:linear-gradient(115deg,#fb7185,#e11d48 55%,#be123c);box-shadow:0 10px 22px -10px rgba(225,29,72,.6)}
+.adm-switch-btn{position:relative;z-index:1;border:0;background:none;cursor:pointer;padding:11px 0;border-radius:999px;font:inherit;font-size:14px;font-weight:700;color:var(--muted,#475467);transition:color .25s}
+.adm-switch-btn:hover{color:var(--ink,#0f172a)}
+.adm-switch-btn[aria-selected="true"]{color:#fff}
+.adm-switch-btn:focus-visible{outline:2px solid rgba(249,115,22,.55);outline-offset:2px}
+`
+
 export default function Admin() {
   const s = useStore()
   const { state, toast } = s
@@ -44,6 +55,7 @@ export default function Admin() {
   const [act, setAct] = useState<{ type: ActType; user: AdminUser } | null>(null)
   const [amount, setAmount] = useState('')
   const [kind, setKind] = useState<'paid' | 'unpaid'>('paid')
+  const [mode, setMode] = useState<'add' | 'cut'>('add')
   const [pct, setPct] = useState('20')
   const [orderFilter, setOrderFilter] = useState<(typeof ORDER_FILTERS)[number]>('All')
   const [orderAct, setOrderAct] = useState<AdminOrder | null>(null)
@@ -94,9 +106,14 @@ export default function Admin() {
   const isLocal = (email: string) => email.trim().toLowerCase() === state.profile.email.toLowerCase()
 
   const close = () => { setAct(null); setAmount('') }
+  /** The popup for Funds / Referral has an Add | Cut switch; this turns (popup + switch) into the real action. */
+  const effType = (a: { type: ActType }): ActType =>
+    a.type === 'funds' ? (mode === 'add' ? 'funds' : 'cutFunds') : a.type === 'referral' ? (mode === 'add' ? 'referral' : 'cutReferral') : a.type
+  const openAct = (type: ActType, user: AdminUser) => { setMode('add'); setAmount(''); setAct({ type, user }) }
   const run = async () => {
     if (!act) return
-    const { type, user } = act
+    const type = effType(act)
+    const { user } = act
     const a = Number(amount)
     if ((type === 'funds' || type === 'referral' || type === 'cutFunds' || type === 'cutReferral') && !(a > 0)) return toast('Enter a valid amount', undefined, 'error')
     if (!live && type === 'cutFunds' && a > (kind === 'paid' ? state.balance : state.unpaid)) return toast('Amount is more than the current balance', undefined, 'error')
@@ -175,12 +192,10 @@ export default function Admin() {
                 <div className="grow"><b className="adm-email">{u.email}</b>
                   <div className="tiny faint">Code {u.code}{u.refBy ? ` · referred by ${u.refBy}` : ''} · {u.percent}% cashback · Wallet {formatINR(u.balance)} · Referral {formatINR(u.earned)}</div></div></div>
               <div className="adm-actions">
-                <button type="button" className="btn btn-soft btn-sm" onClick={() => setAct({ type: 'funds', user: u })}><Wallet /> Add funds</button>
-                <button type="button" className="btn btn-soft btn-sm" onClick={() => setAct({ type: 'referral', user: u })}><Gift /> Referral funds</button>
-                <button type="button" className="btn btn-soft btn-sm" onClick={() => setAct({ type: 'cutFunds', user: u })}><Minus /> Cut funds</button>
-                <button type="button" className="btn btn-soft btn-sm" onClick={() => setAct({ type: 'cutReferral', user: u })}><Minus /> Cut referral</button>
-                <button type="button" className="btn btn-soft btn-sm" onClick={() => { setPct(String(u.percent)); setAct({ type: 'cashback', user: u }) }}><Percent /> Cashback %</button>
-                <button type="button" className="btn btn-danger btn-sm" onClick={() => setAct({ type: 'delete', user: u })}><Trash2 /> Delete</button>
+                <button type="button" className="btn btn-soft btn-sm" onClick={() => openAct('funds', u)}><Wallet /> Funds</button>
+                <button type="button" className="btn btn-soft btn-sm" onClick={() => openAct('referral', u)}><Gift /> Referral</button>
+                <button type="button" className="btn btn-soft btn-sm" onClick={() => { setPct(String(u.percent)); openAct('cashback', u) }}><Percent /> Cashback %</button>
+                <button type="button" className="btn btn-danger btn-sm" onClick={() => openAct('delete', u)}><Trash2 /> Delete</button>
               </div>
             </div>
           ))}
@@ -293,40 +308,46 @@ export default function Admin() {
       </Modal>
 
       <Modal open={!!act} onClose={close} labelledBy="adm-t" width={420}>
-        {act && (
-          <>
-            <ModalHead id="adm-t" title={act.type === 'funds' ? 'Add funds' : act.type === 'referral' ? 'Add referral funds' : act.type === 'cutFunds' ? 'Cut funds' : act.type === 'cutReferral' ? 'Cut referral funds' : act.type === 'cashback' ? 'Affiliate percentage' : 'Delete user'} subtitle={act.user.email} onClose={close} />
-            <div className="stack">
-              {(act.type === 'funds' || act.type === 'referral' || act.type === 'cutFunds' || act.type === 'cutReferral') && (
-                <input className="input" type="number" inputMode="decimal" placeholder="Amount (₹)" value={amount} onChange={(e) => setAmount(e.target.value)} />
-              )}
-              {act.type === 'funds' && (
-                <>
-                  <Segmented label="Credit type" options={['paid', 'unpaid'] as const} value={kind} onChange={setKind} />
-                  <InfoBox><b>Paid</b> is real wallet money. <b>Unpaid</b> only places demo orders and is never withdrawable.</InfoBox>
-                </>
-              )}
-              {act.type === 'referral' && <InfoBox>Referral funds are the only balance the user can withdraw.</InfoBox>}
-              {act.type === 'cutFunds' && (
-                <>
-                  <Segmented label="Deduct from" options={['paid', 'unpaid'] as const} value={kind} onChange={setKind} />
-                  <InfoBox warn>Removes the amount from the user’s <b>{kind === 'paid' ? 'paid wallet' : 'unpaid (demo) credit'}</b>. It cannot go below ₹0.</InfoBox>
-                </>
-              )}
-              {act.type === 'cutReferral' && <InfoBox warn>Removes the amount from the user’s referral / cashback earnings. Only what is still withdrawable can be cut.</InfoBox>}
-              {act.type === 'cashback' && (
-                <>
-                  <input className="input" type="number" inputMode="decimal" placeholder="Percent" value={pct} onChange={(e) => setPct(e.target.value)} />
-                  <InfoBox>Applies to code <b>{act.user.code}</b> from the next top-up of anyone who joins with it.</InfoBox>
-                </>
-              )}
-              {act.type === 'delete' && <InfoBox warn>This removes the account and cannot be undone.</InfoBox>}
-              <button className={`btn ${act.type === 'delete' || act.type === 'cutFunds' || act.type === 'cutReferral' ? 'btn-danger' : 'btn-primary'} btn-block`} type="button" onClick={run}>
-                {act.type === 'delete' ? 'Delete user' : act.type === 'cutFunds' || act.type === 'cutReferral' ? 'Deduct' : 'Save'}
-              </button>
-            </div>
-          </>
-        )}
+        {act && (() => {
+          const type = effType(act)
+          const money = act.type === 'funds' || act.type === 'referral'
+          const cut = type === 'cutFunds' || type === 'cutReferral'
+          return (
+            <>
+              <style>{ADM_SWITCH_CSS}</style>
+              <ModalHead id="adm-t" title={act.type === 'funds' ? 'Wallet funds' : act.type === 'referral' ? 'Referral funds' : act.type === 'cashback' ? 'Affiliate percentage' : 'Delete user'} subtitle={act.user.email} onClose={close} />
+              <div className="stack">
+                {money && (
+                  <div className="adm-switch" role="tablist" aria-label="Add or cut" data-active={mode}>
+                    <span className="adm-switch-thumb" aria-hidden="true" />
+                    <button type="button" role="tab" className="adm-switch-btn" aria-selected={mode === 'add'} onClick={() => setMode('add')}>Add</button>
+                    <button type="button" role="tab" className="adm-switch-btn" aria-selected={mode === 'cut'} onClick={() => setMode('cut')}>Cut</button>
+                  </div>
+                )}
+                {money && (
+                  <input className="input" type="number" inputMode="decimal" placeholder="Amount (₹)" value={amount} onChange={(e) => setAmount(e.target.value)} />
+                )}
+                {act.type === 'funds' && (
+                  <Segmented label={cut ? 'Deduct from' : 'Credit type'} options={['paid', 'unpaid'] as const} value={kind} onChange={setKind} />
+                )}
+                {type === 'funds' && <InfoBox><b>Paid</b> is real wallet money. <b>Unpaid</b> only places demo orders and is never withdrawable.</InfoBox>}
+                {type === 'referral' && <InfoBox>Referral funds are the only balance the user can withdraw.</InfoBox>}
+                {type === 'cutFunds' && <InfoBox warn>Removes the amount from the user’s <b>{kind === 'paid' ? 'paid wallet' : 'unpaid (demo) credit'}</b>. It cannot go below ₹0.</InfoBox>}
+                {type === 'cutReferral' && <InfoBox warn>Removes the amount from the user’s referral / cashback earnings. Only what is still withdrawable can be cut.</InfoBox>}
+                {act.type === 'cashback' && (
+                  <>
+                    <input className="input" type="number" inputMode="decimal" placeholder="Percent" value={pct} onChange={(e) => setPct(e.target.value)} />
+                    <InfoBox>Applies to code <b>{act.user.code}</b> from the next top-up of anyone who joins with it.</InfoBox>
+                  </>
+                )}
+                {act.type === 'delete' && <InfoBox warn>This removes the account and cannot be undone.</InfoBox>}
+                <button className={`btn ${act.type === 'delete' || cut ? 'btn-danger' : 'btn-primary'} btn-block`} type="button" onClick={run}>
+                  {act.type === 'delete' ? 'Delete user' : cut ? 'Deduct' : money ? 'Add' : 'Save'}
+                </button>
+              </div>
+            </>
+          )
+        })()}
       </Modal>
       <p className="tiny faint" style={{ marginTop: 18 }}>Paid wallet total shown to user: {formatINR(state.balance)}</p>
     </div>

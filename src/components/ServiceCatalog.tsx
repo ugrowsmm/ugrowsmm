@@ -89,7 +89,7 @@ export default function ServiceCatalog({ variant }: { variant: 'services' | 'ord
         // recommended = service types first (followers, likes, repost, views, shares, growth), country-wise groups last
         const sorted =
           sort === 'recommended'
-            ? [...list].sort((a, b) => categoryRank(a.category) - categoryRank(b.category))
+            ? [...list].sort((a, b) => categoryRank(a.category) - categoryRank(b.category) || a.rate - b.rate) // categories in order, cheapest first inside each
             : [...list].sort((a, b) => (sort === 'price-asc' ? a.rate - b.rate : b.rate - a.rate))
         return { p, list: sorted, from: list.length ? Math.min(...list.filter((s) => s.mode !== 'package').map((s) => s.rate), Infinity) % Infinity || Math.min(...list.map((s) => s.rate)) : 0 }
       }).filter((g) => g.list.length > 0),
@@ -170,7 +170,7 @@ export default function ServiceCatalog({ variant }: { variant: 'services' | 'ord
           <input value={query} onChange={(e) => setQuery(e.target.value)} placeholder="Search followers, views, likes…" aria-label="Search services" />
         </label>
         <select className="select" value={sort} onChange={(e) => setSort(e.target.value as Sort)} aria-label="Sort services">
-          <option value="recommended">Recommended</option>
+          <option value="recommended">Recommended · low to high</option>
           <option value="price-asc">Price: low to high</option>
           <option value="price-desc">Price: high to low</option>
         </select>

@@ -69,6 +69,8 @@ const maskEmail = (e: string) => e.replace(/^(.).*(@.*)$/, (_m, a, b) => a + 'â€
 
 /** Sign In / Sign Up pill switch (styled with the site's orange theme) */
 const AUTH_TABS_CSS = `
+.auth-form-side.auth-top{align-items:flex-start;padding-top:clamp(28px,11vh,120px)}
+@media (max-width:1020px){.auth-form-side.auth-top{padding-top:28px}}
 .auth-tabs{position:relative;display:grid;grid-template-columns:1fr 1fr;padding:5px;margin-bottom:30px;border-radius:999px;background:var(--panel-3,#f1f5f9);border:1px solid rgba(249,115,22,.3);box-shadow:inset 0 1px 2px rgba(16,24,40,.05)}
 .auth-tabs-thumb{position:absolute;top:5px;bottom:5px;left:5px;width:calc(50% - 5px);border-radius:999px;background:var(--grad,linear-gradient(115deg,#fb923c,#f97316 48%,#ea580c));box-shadow:0 10px 22px -10px rgba(249,115,22,.65);transition:transform .38s cubic-bezier(.22,1,.36,1)}
 .auth-tabs[data-active="signup"] .auth-tabs-thumb{transform:translateX(100%)}
@@ -289,7 +291,8 @@ export default function Login() {
         </div>
       </section>
 
-      <main className="auth-form-side">
+      <main className="auth-form-side auth-top">
+        <style>{AUTH_TABS_CSS}</style>
         <div className="auth-card">
           <Link to="/" className="auth-mobile-brand">
             <span className="brand-mark">
@@ -302,18 +305,15 @@ export default function Login() {
           </Link>
 
           {view === 'signin' || view === 'signup' ? (
-            <>
-              <style>{AUTH_TABS_CSS}</style>
-              <div className="auth-tabs" role="tablist" aria-label="Account" data-active={view}>
-                <span className="auth-tabs-thumb" aria-hidden="true" />
-                <button type="button" role="tab" className="auth-tab" aria-selected={view === 'signin'} onClick={() => go('signin')}>
-                  Sign In
-                </button>
-                <button type="button" role="tab" className="auth-tab" aria-selected={view === 'signup'} onClick={() => go('signup')}>
-                  Sign Up
-                </button>
-              </div>
-            </>
+            <div className="auth-tabs" role="tablist" aria-label="Account" data-active={view}>
+              <span className="auth-tabs-thumb" aria-hidden="true" />
+              <button type="button" role="tab" className="auth-tab" aria-selected={view === 'signin'} onClick={() => go('signin')}>
+                Sign In
+              </button>
+              <button type="button" role="tab" className="auth-tab" aria-selected={view === 'signup'} onClick={() => go('signup')}>
+                Sign Up
+              </button>
+            </div>
           ) : null}
 
           <span className="eyebrow">{view === 'signup' ? 'New here' : 'Secure sign in'}</span>

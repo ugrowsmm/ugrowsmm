@@ -10,6 +10,7 @@ import {
   TIERS,
   TIER_ORDER,
   formatFrom,
+  startingRate,
   formatINR,
   type Platform,
   type Quality,
@@ -74,7 +75,7 @@ export default function ServiceCatalog({ variant }: { variant: 'services' | 'ord
       TIER_ORDER.map((t) => {
         const all = SERVICES.filter((s) => s.quality === t)
         const shown = all.filter(matches)
-        return { t, total: all.length, shown: shown.length, from: all.length ? Math.min(...all.filter((s) => s.mode !== 'package').map((s) => s.rate), Infinity) % Infinity || Math.min(...all.map((s) => s.rate)) : 0 }
+        return { t, total: all.length, shown: shown.length, from: startingRate(all) }
       }),
     // eslint-disable-next-line react-hooks/exhaustive-deps
     [q],
@@ -91,7 +92,7 @@ export default function ServiceCatalog({ variant }: { variant: 'services' | 'ord
           sort === 'recommended'
             ? [...list].sort((a, b) => categoryRank(a.category) - categoryRank(b.category) || a.rate - b.rate) // categories in order, cheapest first inside each
             : [...list].sort((a, b) => (sort === 'price-asc' ? a.rate - b.rate : b.rate - a.rate))
-        return { p, list: sorted, from: list.length ? Math.min(...list.filter((s) => s.mode !== 'package').map((s) => s.rate), Infinity) % Infinity || Math.min(...list.map((s) => s.rate)) : 0 }
+        return { p, list: sorted, from: startingRate(list) }
       }).filter((g) => g.list.length > 0),
     [inTier, sort],
   )

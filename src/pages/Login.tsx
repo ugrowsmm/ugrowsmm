@@ -67,6 +67,17 @@ const errText = (e?: string) =>
   (e && ERRORS[e]) || (e?.startsWith('unknown:') && e.length > 8 ? 'Error: ' + e.slice(8) : 'Something went wrong. Please try again.')
 const maskEmail = (e: string) => e.replace(/^(.).*(@.*)$/, (_m, a, b) => a + '•••' + b)
 
+/** Sign In / Sign Up pill switch (styled with the site's orange theme) */
+const AUTH_TABS_CSS = `
+.auth-tabs{position:relative;display:grid;grid-template-columns:1fr 1fr;padding:5px;margin-bottom:30px;border-radius:999px;background:var(--panel-3,#f1f5f9);border:1px solid rgba(249,115,22,.3);box-shadow:inset 0 1px 2px rgba(16,24,40,.05)}
+.auth-tabs-thumb{position:absolute;top:5px;bottom:5px;left:5px;width:calc(50% - 5px);border-radius:999px;background:var(--grad,linear-gradient(115deg,#fb923c,#f97316 48%,#ea580c));box-shadow:0 10px 22px -10px rgba(249,115,22,.65);transition:transform .38s cubic-bezier(.22,1,.36,1)}
+.auth-tabs[data-active="signup"] .auth-tabs-thumb{transform:translateX(100%)}
+.auth-tab{position:relative;z-index:1;border:0;background:none;cursor:pointer;padding:12px 0;border-radius:999px;font:inherit;font-size:14px;font-weight:700;color:var(--muted,#475467);transition:color .25s}
+.auth-tab:hover{color:var(--ink,#0f172a)}
+.auth-tab[aria-selected="true"]{color:#fff}
+.auth-tab:focus-visible{outline:2px solid rgba(249,115,22,.55);outline-offset:2px}
+`
+
 export default function Login() {
   const { signIn, signInAccount, toast, justDeleted, clearJustDeleted } = useStore()
   const navigate = useNavigate()
@@ -289,6 +300,21 @@ export default function Login() {
               <span className="brand-sub">SMM Panel</span>
             </span>
           </Link>
+
+          {view === 'signin' || view === 'signup' ? (
+            <>
+              <style>{AUTH_TABS_CSS}</style>
+              <div className="auth-tabs" role="tablist" aria-label="Account" data-active={view}>
+                <span className="auth-tabs-thumb" aria-hidden="true" />
+                <button type="button" role="tab" className="auth-tab" aria-selected={view === 'signin'} onClick={() => go('signin')}>
+                  Sign In
+                </button>
+                <button type="button" role="tab" className="auth-tab" aria-selected={view === 'signup'} onClick={() => go('signup')}>
+                  Sign Up
+                </button>
+              </div>
+            </>
+          ) : null}
 
           <span className="eyebrow">{view === 'signup' ? 'New here' : 'Secure sign in'}</span>
           <h2>{title}</h2>

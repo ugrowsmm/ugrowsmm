@@ -16,7 +16,7 @@ type ActType = 'funds' | 'referral' | 'cashback' | 'delete' | 'cutFunds' | 'cutR
 interface AdminUser { email: string; name: string; code: string; refBy: string; percent: number; balance: number; earned: number }
 interface AdminOrder { id: string; email: string; name: string; link: string; qty: number; charge: number; status: OrderStatus; createdAt: string; tag: string }
 interface AdminPayout { key: string; id?: number; localId?: string; email: string; amount: number; method: string; details: string; status: 'Processing' | 'Paid' | 'Rejected'; createdAt: string }
-interface AdminTicket { id: string; email: string; type: string; orderId: string; subject: string; message: string; status: 'Open' | 'Resolved'; createdAt: string }
+interface AdminTicket { id: string; email: string; type: string; orderId: string; subject: string; message: string; status: 'Open' | 'Resolved'; createdAt: string; resolvedAt: string }
 
 const normOrderStatus = (v: unknown): OrderStatus => {
   const t = String(v ?? '').toLowerCase()
@@ -61,6 +61,7 @@ export default function Admin() {
   const [orderAct, setOrderAct] = useState<AdminOrder | null>(null)
   const [newStatus, setNewStatus] = useState<OrderStatus>('Completed')
   const [refund, setRefund] = useState(true)
+  const [ticketDel, setTicketDel] = useState<AdminTicket | null>(null)
   const [payoutAct, setPayoutAct] = useState<{ p: AdminPayout; to: 'Paid' | 'Rejected' } | null>(null)
 
   const load = useCallback(async () => {
@@ -99,8 +100,8 @@ export default function Admin() {
     ? (remote?.withdrawals ?? []).map((x: any) => ({ key: String(x.id), id: Number(x.id), email: String(x.email ?? ''), amount: Number(x.amount) || 0, method: String(x.method ?? ''), details: String(x.details ?? ''), status: normPayoutStatus(x.status), createdAt: String(x.createdAt ?? '') }))
     : state.withdrawals.map((w) => ({ key: w.id, localId: w.id, email: state.profile.email, amount: w.amount, method: w.method, details: w.details, status: normPayoutStatus(w.status), createdAt: w.createdAt }))
   const tickets: AdminTicket[] = live
-    ? (remote?.tickets ?? []).map((t: any) => ({ id: String(t.id), email: String(t.email ?? ''), type: String(t.type ?? ''), orderId: String(t.orderId ?? ''), subject: String(t.subject ?? ''), message: String(t.message ?? ''), status: t.status === 'Resolved' ? 'Resolved' : 'Open', createdAt: String(t.createdAt ?? '') }))
-    : state.tickets.map((t) => ({ id: t.id, email: state.profile.email, type: t.type, orderId: t.orderId, subject: t.subject, message: t.message, status: t.status, createdAt: t.createdAt }))
+    ? (remote?.tickets ?? []).map((t: any) => ({ id: String(t.id), email: String(t.email ?? ''), type: String(t.type ?? ''), orderId: String(t.orderId ?? ''), subject: String(t.subject ?? ''), message: String(t.message ?? ''), status: t.status === 'Resolved' ? 'Resolved' : 'Open', createdAt: String(t.createdAt ?? ''), resolvedAt: String(t.resolvedAt ?? '') }))
+    : state.tickets.map((t) => ({ id: t.id, email: state.profile.email, type: t.type, orderId: t.orderId, subject: t.subject, message: t.message, status: t.status, createdAt: t.createdAt, resolvedAt: t.resolvedAt ?? '' }))
   const shownOrders = orders.filter((o) => orderFilter === 'All' ? true : orderFilter === 'Needs attention' ? isStuck(o) : o.status === orderFilter)
   const openTickets = tickets.filter((t) => t.status === 'Open').length
   const isLocal = (email: string) => email.trim().toLowerCase() === state.profile.email.toLowerCase()
@@ -173,6 +174,23 @@ export default function Admin() {
     } else s.adminSetTicketStatus(t.id, status)
     toast(status === 'Resolved' ? 'Ticket resolved' : 'Ticket reopened', t.id)
     if (live) void load()
+  }
+
+  const deleteTicket = async () => {
+    if (!ticketDel) return
+    const t = ticketDel
+    if (!live) { setTicketDel(null); return toast('Demo mode', 'Ticket delete works with the live backend.', 'info') }
+    const { error } = await rpc('admin_delete_ticket', { p_id: t.id })
+    if (error) return toast('Failed', error, 'error')
+    toast('Ticket deleted', t.id)
+    setTicketDel(null)
+    void load()
+  }
+  /** Resolved tickets are removed automatically 3 days after they were resolved. */
+  const daysLeft = (t: AdminTicket) => {
+    const at = new Date(t.resolvedAt || t.createdAt).getTime()
+    if (!Number.isFinite(at)) return null
+    return Math.max(0, Math.ceil((at + 3 * 864e5 - Date.now()) / 864e5))
   }
 
   return (
@@ -262,9 +280,13 @@ export default function Admin() {
                 <span className={`badge ${t.status === 'Resolved' ? 'badge-green' : 'badge-amber'}`}>{t.status}</span>
               </div>
               <p className="small" style={{ margin: 0, whiteSpace: 'pre-wrap', wordBreak: 'break-word' }}>{t.message}</p>
-              {t.status === 'Open'
-                ? <button type="button" className="btn btn-primary btn-sm" onClick={() => setTicket(t, 'Resolved')}><CheckCircle2 /> Mark resolved</button>
-                : <button type="button" className="btn btn-soft btn-sm" onClick={() => setTicket(t, 'Open')}><RotateCcw /> Reopen</button>}
+              {t.status === 'Resolved' && daysLeft(t) !== null ? <div className="tiny faint">Auto-deletes {daysLeft(t) === 0 ? 'within a day' : `in ${daysLeft(t)} day${daysLeft(t) === 1 ? '' : 's'}`}</div> : null}
+              <div className="adm-actions">
+                {t.status === 'Open'
+                  ? <button type="button" className="btn btn-primary btn-sm" onClick={() => setTicket(t, 'Resolved')}><CheckCircle2 /> Mark resolved</button>
+                  : <button type="button" className="btn btn-soft btn-sm" onClick={() => setTicket(t, 'Open')}><RotateCcw /> Reopen</button>}
+                <button type="button" className="btn btn-danger btn-sm" onClick={() => setTicketDel(t)}><Trash2 /> Delete</button>
+              </div>
             </div>
           )) : <div className="empty"><b>No tickets yet</b></div>}
         </div>
@@ -288,6 +310,18 @@ export default function Admin() {
                 <label className="row" style={{ gap: 8, fontSize: 13 }}><input type="checkbox" checked={refund} onChange={(e) => setRefund(e.target.checked)} /> Refund {formatINR(orderAct.charge)} to the user’s wallet</label>
               ) : null}
               <button className="btn btn-primary btn-block" type="button" onClick={saveOrderStatus}>Save status</button>
+            </div>
+          </>
+        )}
+      </Modal>
+
+      <Modal open={!!ticketDel} onClose={() => setTicketDel(null)} labelledBy="adm-td" width={420}>
+        {ticketDel && (
+          <>
+            <ModalHead id="adm-td" title="Delete ticket" subtitle={`${ticketDel.id} · ${ticketDel.email}`} onClose={() => setTicketDel(null)} />
+            <div className="stack">
+              <InfoBox warn>This removes the ticket for you and for the user. It cannot be undone.</InfoBox>
+              <button className="btn btn-danger btn-block" type="button" onClick={deleteTicket}>Delete ticket</button>
             </div>
           </>
         )}

@@ -455,6 +455,19 @@ export const formatINR = (value: number, decimals = 2) =>
 /** Starting prices: show paise when the rate is under ₹10 and not a whole number (₹1.25, not ₹1). */
 export const formatFrom = (v: number) => formatINR(v, v < 10 && !Number.isInteger(v) ? 2 : 0)
 
+/**
+ * "Starting from" price for a group of services (per 1,000).
+ * Skips flat-price packages and zero/invalid rates so the label can never show a fake ₹0.
+ */
+export const startingRate = (list: ReadonlyArray<Pick<Service, 'mode' | 'rate'>>): number => {
+  const pick = (arr: ReadonlyArray<Pick<Service, 'mode' | 'rate'>>) =>
+    arr.map((s) => s.rate).filter((r) => Number.isFinite(r) && r > 0)
+  const per1k = pick(list.filter((s) => s.mode !== 'package'))
+  if (per1k.length) return Math.min(...per1k)
+  const any = pick(list)
+  return any.length ? Math.min(...any) : 0
+}
+
 export const formatCompact = (value: number) => {
   if (value >= 1000000) return `${(value / 1000000).toFixed(1)}M`
   if (value >= 1000) return `${(value / 1000).toFixed(value >= 10000 ? 0 : 1)}K`

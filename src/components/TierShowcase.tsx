@@ -7,6 +7,7 @@ import {
   TIERS,
   TIER_ORDER,
   formatFrom,
+  startingRate,
   type Platform,
   type Quality,
 } from '../lib/data'
@@ -29,7 +30,7 @@ export default function TierShowcase() {
       TIER_ORDER.map((t) => {
         const list = SERVICES.filter((s) => s.quality === t)
         const platforms = Array.from(new Set(list.map((s) => s.platform))) as Platform[]
-        return { t, count: list.length, platforms, from: list.length ? Math.min(...list.map((s) => s.rate)) : 0 }
+        return { t, count: list.length, platforms, from: startingRate(list) }
       }).filter((x) => x.count > 0),
     [],
   )

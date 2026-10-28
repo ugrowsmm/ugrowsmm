@@ -10,6 +10,7 @@ import {
 } from 'react'
 import {
   SERVICES,
+  priceOf,
   seedOrders,
   seedTransactions,
   type Order,
@@ -99,8 +100,14 @@ interface PlaceOrderInput {
   link: string
   quantity: number
   dripfeed: boolean
-  /** Custom-comments services only: one comment per line. The quantity is the number of lines. */
+  /** comments / list services (and custom-comment packages): one entry per line. */
   comments?: string
+  /** poll services: the answer number to vote for. */
+  answer?: number
+  /** note services: message or instructions. */
+  note?: string
+  /** auto services: quantity range per post, number of posts and delay in minutes. */
+  auto?: { min: number; max: number; posts: number; delay: number }
 }
 
 interface PlaceOrderResult {
@@ -370,24 +377,39 @@ export function StoreProvider({ children }: { children: ReactNode }) {
   }, [state.signedIn, state.real, refreshAccount])
 
   const placeOrder = useCallback(
-    async ({ serviceId, link, quantity, dripfeed, comments }: PlaceOrderInput): Promise<PlaceOrderResult> => {
+    async ({ serviceId, link, quantity, dripfeed, comments, answer, auto }: PlaceOrderInput): Promise<PlaceOrderResult> => {
       const service = SERVICES.find((s) => s.id === serviceId)
       if (!service) return { ok: false, error: 'Please choose a service to continue.' }
-      if (service.custom) {
-        // custom comments: one comment per line, and the number of lines is the quantity
-        const lines = (comments ?? '').split('\n').map((l) => l.trim()).filter(Boolean)
-        if (lines.length === 0) return { ok: false, error: 'Add your comments, one comment per line.' }
-        quantity = lines.length
-      }
-      if (!link.trim()) return { ok: false, error: 'Add the target link for this order.' }
-      if (!/^[a-z0-9-]+(\.[a-z0-9-]+)+/i.test(link.trim().replace(/^https?:\/\//, '')))
+      if (!link.trim()) return { ok: false, error: service.mode === 'auto' ? 'Add the username or profile link to boost.' : 'Add the target link for this order.' }
+      if (service.mode !== 'auto' && !/^[a-z0-9-]+(\.[a-z0-9-]+)+/i.test(link.trim().replace(/^https?:\/\//, '')))
         return { ok: false, error: 'That link doesn’t look right. Check the URL and try again.' }
-      if (!Number.isFinite(quantity) || quantity < service.min)
-        return { ok: false, error: `Minimum quantity for this service is ${service.min.toLocaleString('en-IN')}.` }
-      if (quantity > service.max)
-        return { ok: false, error: `Maximum quantity for this service is ${service.max.toLocaleString('en-IN')}.` }
 
-      const charge = Math.round(((service.rate * quantity) / 1000) * 100) / 100
+      const lines = (comments ?? '').split('\n').map((l) => l.trim()).filter(Boolean)
+      if (service.mode === 'package') {
+        // one flat price, no quantity; some packages also need the buyer's own comment lines
+        if (service.lines !== undefined && lines.length !== service.lines)
+          return { ok: false, error: `This package needs exactly ${service.lines} comment${service.lines === 1 ? '' : 's'}, one per line.` }
+        quantity = 1
+      } else if (service.mode === 'comments' || service.mode === 'list') {
+        if (lines.length === 0) return { ok: false, error: service.mode === 'list' ? 'Paste your list, one entry per line.' : 'Add your comments, one comment per line.' }
+        quantity = lines.length
+      } else if (service.mode === 'poll') {
+        if (!Number.isInteger(answer) || (answer ?? 0) < 1) return { ok: false, error: 'Enter the poll answer number you want votes for.' }
+      } else if (service.mode === 'auto') {
+        if (!auto || !(auto.posts >= 1)) return { ok: false, error: 'Choose how many new posts to boost.' }
+        if (auto.min < service.min || auto.max > service.max || auto.min > auto.max)
+          return { ok: false, error: `Quantity per post must be between ${service.min.toLocaleString('en-IN')} and ${service.max.toLocaleString('en-IN')}.` }
+        quantity = auto.max * auto.posts // the most this subscription can use; charged up front
+      }
+
+      if (service.mode !== 'package') {
+        if (!Number.isFinite(quantity) || (service.mode !== 'auto' && quantity < service.min))
+          return { ok: false, error: `Minimum quantity for this service is ${service.min.toLocaleString('en-IN')}.` }
+        if (service.mode !== 'auto' && quantity > service.max)
+          return { ok: false, error: `Maximum quantity for this service is ${service.max.toLocaleString('en-IN')}.` }
+      }
+
+      const charge = priceOf(service, quantity)
 
       if (state.real && apiReady()) {
         // Services and provider ordering are switched on in the next step
@@ -424,7 +446,7 @@ export function StoreProvider({ children }: { children: ReactNode }) {
           {
             id: 'TX-' + Math.floor(5600 + Math.random() * 300),
             type: 'order',
-            label: `${service.name} · ${quantity.toLocaleString('en-IN')}`,
+            label: service.mode === 'package' ? service.name : `${service.name} · ${quantity.toLocaleString('en-IN')}`,
             amount: charge,
             createdAt: new Date().toISOString(),
           },

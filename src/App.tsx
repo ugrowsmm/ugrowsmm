@@ -16,6 +16,7 @@ const AddFunds = lazy(() => import('./pages/AddFunds'))
 const ApiPage = lazy(() => import('./pages/ApiPage'))
 const SettingsPage = lazy(() => import('./pages/Settings'))
 const Referral = lazy(() => import('./pages/Referral'))
+const Pro = lazy(() => import('./pages/Pro'))
 const Support = lazy(() => import('./pages/Support'))
 const Admin = lazy(() => import('./pages/Admin'))
 import PageLoader from './components/PageLoader'
@@ -96,6 +97,7 @@ function Shell() {
             <Route path="/services" element={<Services />} />
             <Route path="/add-funds" element={<AddFunds />} />
             <Route path="/referral" element={<Referral />} />
+            <Route path="/pro" element={<Pro />} />
             <Route path="/support" element={<Support />} />
             <Route path="/api" element={<ApiPage />} />
             <Route path="/settings" element={<SettingsPage />} />
@@ -106,6 +108,7 @@ function Shell() {
           <>
             <Route path="/" element={<Home />} />
             <Route path="/login" element={<Login />} />
+            <Route path="/pro" element={<Pro />} />
             <Route path="*" element={<Navigate to="/login" replace />} />
           </>
         )}

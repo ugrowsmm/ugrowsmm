@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useRef, useState } from 'react'
 import { Link, useSearchParams } from 'react-router-dom'
 import { ArrowRight, Check, ChevronDown, Clock, Crown, RefreshCw, Search, Star, Wallet, Zap } from 'lucide-react'
-import { useStore } from '../lib/store'
+import { PRO_DISCOUNT_PERCENT, isProState, proRate, useStore } from '../lib/store'
 import {
   PLATFORM_LABEL,
   categoryRank,
@@ -145,7 +145,7 @@ export default function ServiceCatalog({ variant }: { variant: 'services' | 'ord
               <span className="cg-tab-ic"><Icon fill={t === 'Standard' ? 'none' : 'currentColor'} aria-hidden="true" /></span>
               <span className="cg-tab-name">{t}</span>
               <span className="cg-tab-grade">{TIERS[t].grade}</span>
-              <span className="cg-tab-from">from {formatFrom(from)}<small>/1k</small></span>
+              <span className="cg-tab-from">from {formatFrom(proRate(from, isProState(state)))}<small>/1k</small></span>
               <span className="cg-tab-count" style={{ display: 'block' }}>{searching ? `${shown} match${shown === 1 ? '' : 'es'}` : `${total} services`}</span>
               <span className="cg-tab-check" aria-hidden="true"><Check size={13} /></span>
             </button>
@@ -310,6 +310,8 @@ function PlatformAccordion({
 }
 
 function ServiceCard({ s, onPick }: { s: Service; onPick: (s: Service) => void }) {
+  const { state } = useStore()
+  const pro = isProState(state)
   const refill = refillOf(s)
   return (
     <button type="button" className={`cg-card ${CLS[s.quality]}`} onClick={() => onPick(s)}>
@@ -328,7 +330,11 @@ function ServiceCard({ s, onPick }: { s: Service; onPick: (s: Service) => void }
         <span className={`cg-refill ${refill.tone}`}><RefreshCw size={13} /> {refill.tone === 'none' ? 'No refill' : `Refill · ${refill.label}`}</span>
       </span>
       <span className="cg-card-foot">
-        <span className="rate">{formatINR(s.rate)} <small>{s.mode === 'package' ? '/ package' : '/ 1,000'}</small></span>
+        <span className="rate">
+          {pro ? <s className="rate-old">{formatINR(s.rate)}</s> : null}
+          {formatINR(proRate(s.rate, pro))} <small>{s.mode === 'package' ? '/ package' : '/ 1,000'}</small>
+          {pro ? <em className="rate-pro" title={`Pro price, ${PRO_DISCOUNT_PERCENT}% off`}><Crown size={10} fill="currentColor" aria-hidden="true" /> −{PRO_DISCOUNT_PERCENT}%</em> : null}
+        </span>
         <span className="btn btn-primary btn-sm">Order <ArrowRight /></span>
       </span>
     </button>

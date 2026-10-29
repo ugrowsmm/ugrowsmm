@@ -12,3 +12,10 @@ export const SINCE_YEAR = 2019
 export const ORDERS_LABEL = '1 Million+'
 export const ORDER_EVERY_LABEL = '0.3s'
 export const PRICE_FROM_LABEL = '₹1/1K'
+
+// ---- Pro membership ----
+export const PRO_PRICE_MONTH = 1299
+export const PRO_PRICE_YEAR = 10999
+export const PRO_REFERRAL_PERCENT = 30 // commission a Pro member earns on every top-up of the people they refer
+export const PRO_DISCOUNT_PERCENT = 30 // Pro members pay this much less on their own orders
+export const PRO_SUPPORT_EMAIL = 'ugrowsmm@gmail.com' // change to the professional email later

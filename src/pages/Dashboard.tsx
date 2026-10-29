@@ -3,6 +3,7 @@ import {
   ArrowRight,
   ArrowUpRight,
   CreditCard,
+  Crown,
   Gift,
   KeyRound,
   ListOrdered,
@@ -13,7 +14,8 @@ import {
   Wallet,
   Zap,
 } from 'lucide-react'
-import { REFERRAL_PERCENT_DEFAULT, useStore } from '../lib/store'
+import { PRO_REFERRAL_PERCENT, isProState, referralPercentOf, useStore } from '../lib/store'
+import { ProButton } from '../components/ProBits'
 import {
   PLATFORM_LABEL,
   SERVICES,
@@ -142,6 +144,17 @@ export default function Dashboard() {
           </Link>
         </div>
       </div>
+
+      {!isProState(state) ? (
+        <div className="pro-ref pro-ref-dash">
+          <span className="pro-ref-crown" aria-hidden="true"><Crown fill="currentColor" /></span>
+          <div className="pro-ref-copy">
+            <b>Earn like the owner with Pro</b>
+            <p>{PRO_REFERRAL_PERCENT}% on every referral top-up and your own orders at 30% less.</p>
+          </div>
+          <ProButton to="/pro" label="Become a Pro Member" />
+        </div>
+      ) : null}
 
       <div className="grid-2">
         <div className="hero-balance">
@@ -358,7 +371,7 @@ export default function Dashboard() {
               <span>
                 <span className="t">Refer &amp; earn</span>
                 <span className="d">
-                  Earn {state.codePercents[state.referral.code] ?? REFERRAL_PERCENT_DEFAULT}% of every top-up
+                  Earn {referralPercentOf(state)}% of every top-up
                 </span>
               </span>
               <ArrowRight />

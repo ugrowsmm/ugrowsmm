@@ -1,5 +1,6 @@
 import { useState } from 'react'
 import { BadgeCheck, Crown, Gift, Landmark, Users, Wallet } from 'lucide-react'
+import { Link } from 'react-router-dom'
 import { PRO_DISCOUNT_PERCENT, PRO_REFERRAL_PERCENT, REFERRAL_PERCENT_DEFAULT, isProState, referralAvailable, referralPercentOf, useStore } from '../lib/store'
 import { formatINR, timeAgo } from '../lib/data'
 import BonusBanner from '../components/BonusBanner'
@@ -58,7 +59,7 @@ export default function Referral() {
           <span className="pro-ref-crown" aria-hidden="true"><Crown fill="currentColor" /></span>
           <div>
             <b>You earn the Pro rate: {percent}% on every top-up</b>
-            <p>Your referrals' top-ups pay you the full margin. Use the funds for your own orders or withdraw them.</p>
+            <p>You get {percent}% every time your referrals add money. Use it for your orders or withdraw it.</p>
           </div>
         </div>
       ) : (
@@ -66,7 +67,7 @@ export default function Referral() {
           <span className="pro-ref-crown" aria-hidden="true"><Crown fill="currentColor" /></span>
           <div className="pro-ref-copy">
             <b>Earn {PRO_REFERRAL_PERCENT}% instead of {REFERRAL_PERCENT_DEFAULT}% with Pro</b>
-            <p>Pro members keep the full {PRO_REFERRAL_PERCENT}% margin on every referral top-up, and pay {PRO_DISCOUNT_PERCENT}% less on their own orders.</p>
+            <p>Pro members get the full {PRO_REFERRAL_PERCENT}% on every referral, and pay {PRO_DISCOUNT_PERCENT}% less on their own orders.</p>
           </div>
           <ProButton to="/pro" label="Become a Pro Member" />
         </div>
@@ -104,7 +105,10 @@ export default function Referral() {
           <InfoBox>Only earnings from referrals can be withdrawn. Your wallet balance is used for orders and is not withdrawable. You can also spend referral funds on orders. Minimum withdrawal ₹100.</InfoBox>
         </div>
         <div className="card card-pad">
-          <div className="card-title" style={{ marginBottom: 8 }}>Withdrawals</div>
+          <div className="between" style={{ marginBottom: 8 }}>
+            <div className="card-title">Withdrawals</div>
+            <Link to="/billing" className="text-btn">View all</Link>
+          </div>
           {withdrawals.length === 0 ? <span className="small muted">No withdrawals yet.</span> : withdrawals.map((w) => (
             <div key={w.id} className="detail-row">
               <span className="k">{w.method} · {timeAgo(w.createdAt)}</span>

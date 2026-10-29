@@ -185,7 +185,7 @@ function Sheet({ service, onClose }: { service: Service; onClose: () => void }) 
         {!pro ? (
           <Link to="/pro" className="pro-teaser" onClick={onClose}>
             <Crown size={14} fill="currentColor" />
-            <span>Pro members pay <b>{formatINR(proRate(service.rate, true))}</b> for this. Save {PRO_DISCOUNT_PERCENT}% on every order.</span>
+            <span>Pro members pay only <b>{formatINR(proRate(service.rate, true))}</b>. Save {PRO_DISCOUNT_PERCENT}% on every order.</span>
           </Link>
         ) : null}
 

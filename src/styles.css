@@ -6597,7 +6597,7 @@ body{-webkit-font-smoothing:antialiased;-moz-osx-font-smoothing:grayscale;text-r
 
 /* ============================================================
    PRO MEMBERSHIP — gold + crown, set apart from the rest of the panel
-   with its own serif display face (Playfair Display).
+   using the same bold font as the rest of the panel.
    ============================================================ */
 :root {
   --gold-1: #fff3bd;
@@ -6609,7 +6609,7 @@ body{-webkit-font-smoothing:antialiased;-moz-osx-font-smoothing:grayscale;text-r
   --pro-text: #3b2504;
   --gold-grad: linear-gradient(115deg, #fff0a6 0%, #f7d35c 32%, #e3a92e 62%, #c98a16 100%);
   --gold-text: linear-gradient(100deg, #fff6c9 0%, #f7d35c 38%, #e8b23a 70%, #fff0a6 100%);
-  --font-pro: 'Playfair Display', 'Georgia', 'Times New Roman', serif;
+  --font-pro: var(--font-display); /* same clean font as the rest of the panel, just bold */
 }
 
 /* ---- tag, avatar, nav ---- */
@@ -6879,3 +6879,19 @@ body{-webkit-font-smoothing:antialiased;-moz-osx-font-smoothing:grayscale;text-r
   .pro-btn-shine, .login-pro-shine { animation: none; }
   .pro-btn, .login-pro, .pro-plan { transition: none; }
 }
+
+/* ---- billing history ---- */
+.bill-list { padding: 6px 18px; }
+.bill-row { display: flex; align-items: center; gap: 14px; padding: 14px 0; }
+.bill-row + .bill-row { border-top: 1px solid var(--line); }
+.bill-ic { display: grid; place-items: center; width: 40px; height: 40px; border-radius: 12px; flex-shrink: 0; background: var(--orange-tint); color: var(--orange-deep); }
+.bill-ic.withdrawal { background: var(--sky-tint); color: var(--sky-deep); }
+.bill-ic svg { width: 18px; height: 18px; }
+.bill-main { flex: 1; min-width: 0; }
+.bill-title { font-size: 14px; font-weight: 700; color: var(--ink); overflow-wrap: anywhere; }
+.bill-sub { margin-top: 2px; font-size: 12px; color: var(--faint); }
+.bill-id { word-break: break-all; }
+.bill-right { display: grid; justify-items: end; gap: 4px; flex-shrink: 0; }
+.bill-right b { font-family: var(--font-display); font-size: 15px; font-weight: 800; }
+.bill-right b.plus { color: var(--green); }
+.bill-right b.minus { color: var(--ink); }

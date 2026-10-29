@@ -4,6 +4,7 @@ import App from './App'
 import { reloadOnceForNewVersion } from './components/ErrorBoundary'
 import 'lenis/dist/lenis.css'
 import './styles.css'
+import './premium.css'
 
 try {
   const ref = new URLSearchParams(location.hash.split('?')[1] ?? '').get('ref')

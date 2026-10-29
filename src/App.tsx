@@ -3,7 +3,7 @@ import { HashRouter, Navigate, Route, Routes } from 'react-router-dom'
 import { CheckCircle2, Download, Info, XCircle } from 'lucide-react'
 import { StoreProvider, useStore } from './lib/store'
 import { InstallProvider } from './lib/InstallContext'
-import { ScrollManager, ScrollProgress, SmoothScroll } from './components/ScrollUX'
+import { RevealManager, ScrollManager, ScrollProgress, SmoothScroll } from './components/ScrollUX'
 const LegalPage = lazy(() => import('./pages/LegalPage'))
 import Layout from './components/Layout'
 const Login = lazy(() => import('./pages/Login'))
@@ -129,6 +129,7 @@ export default function App() {
           <SmoothScroll />
           <ScrollManager />
           <ScrollProgress />
+          <RevealManager />
           <ErrorBoundary>
             <Shell />
           </ErrorBoundary>

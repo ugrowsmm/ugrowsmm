@@ -5,6 +5,7 @@ import {
   Bell,
   Crown,
   Gift,
+  History,
   ShieldCheck,
   LifeBuoy,
   ChevronRight,
@@ -48,6 +49,7 @@ const SECONDARY_NAV = [
 const PAGE_META: Record<string, { title: string; crumb: string }> = {
   '/referral': { title: 'Refer & earn', crumb: 'Referral' },
   '/pro': { title: 'Pro membership', crumb: 'Pro' },
+  '/billing': { title: 'Payments & withdrawals', crumb: 'Billing' },
   '/support': { title: 'Support', crumb: 'Support' },
   '/': { title: 'Overview', crumb: 'Overview' },
   '/new-order': { title: 'New order', crumb: 'New order' },
@@ -116,6 +118,14 @@ function SidebarNav({ onNavigate }: { onNavigate?: () => void }) {
             <span>{label}</span>
           </NavLink>
         ))}
+        <NavLink
+          to="/billing"
+          onClick={onNavigate}
+          className={({ isActive }) => `nav-item ${isActive ? 'active' : ''}`}
+        >
+          <History />
+          <span>Payments &amp; withdrawals</span>
+        </NavLink>
       </div>
 
       <div className="nav-group">
@@ -366,6 +376,9 @@ function Topbar({ onMenu }: { onMenu: () => void }) {
               </Link>
               <Link to="/add-funds" className="popover-item" role="menuitem">
                 <Wallet size={14} /> Add funds
+              </Link>
+              <Link to="/billing" className="popover-item" role="menuitem">
+                <History size={14} /> Payments &amp; withdrawals
               </Link>
               <Link to="/pro" className="popover-item pro-item" role="menuitem">
                 <Crown size={14} fill="currentColor" /> {isProState(state) ? 'Pro membership' : 'Become a Pro member'}

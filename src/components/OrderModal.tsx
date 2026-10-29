@@ -5,7 +5,9 @@ import {
   Check,
   CheckCircle2,
   Clock,
+  Crown,
   Droplets,
+  Gift,
   Info,
   Link2,
   Plus,
@@ -16,7 +18,7 @@ import {
   Wallet,
   X,
 } from 'lucide-react'
-import { useStore } from '../lib/store'
+import { PRO_DISCOUNT_PERCENT, isProState, proRate, referralAvailable, useStore } from '../lib/store'
 import { PLATFORM_LABEL, TIERS, formatINR, priceOf, type Order, type Service } from '../lib/data'
 import { goodToKnow, linkGuide, refillOf } from '../lib/serviceInfo'
 import { PlatformIcon } from './PlatformIcon'
@@ -60,6 +62,7 @@ function Sheet({ service, onClose }: { service: Service; onClose: () => void }) 
   const [delay, setDelay] = useState(0)
   const [error, setError] = useState('')
   const [placing, setPlacing] = useState(false)
+  const [payPref, setPayPref] = useState<'wallet' | 'referral'>('wallet')
   const [result, setResult] = useState<Order | null>(null)
 
   // one entry per line: the number of lines is the quantity
@@ -72,8 +75,13 @@ function Sheet({ service, onClose }: { service: Service; onClose: () => void }) 
   const tips = useMemo(() => goodToKnow(service), [service])
   const tier = TIERS[service.quality]
 
-  const charge = priceOf(service, qty)
-  const insufficient = charge > state.balance
+  const pro = isProState(state)
+  const rate = proRate(service.rate, pro) // Pro members pay the Pro rate
+  const charge = priceOf({ mode: service.mode, rate }, qty)
+  const refAvail = referralAvailable(state.referral)
+  const payWith: 'wallet' | 'referral' = payPref === 'referral' && refAvail > 0 ? 'referral' : 'wallet'
+  const source = payWith === 'referral' ? refAvail : state.balance
+  const insufficient = charge > source
   const fillPct = ((quantity - service.min) / Math.max(1, service.max - service.min)) * 100
 
   const quickAmounts = useMemo(() => {
@@ -102,6 +110,7 @@ function Sheet({ service, onClose }: { service: Service; onClose: () => void }) 
       note,
       answer: Number(answer),
       auto: isAuto ? { min: autoMin, max: autoMax, posts, delay } : undefined,
+      payWith,
     })
     setPlacing(false)
     if (!outcome.ok) {
@@ -130,6 +139,7 @@ function Sheet({ service, onClose }: { service: Service; onClose: () => void }) 
           <div className="detail-row"><span className="k">Service</span><span className="v">{result.serviceName}</span></div>
           <div className="detail-row"><span className="k">{isPack ? 'Type' : 'Quantity'}</span><span className="v">{isPack ? 'Package' : n(result.quantity)}</span></div>
           <div className="detail-row"><span className="k">Charged</span><span className="v">{formatINR(result.charge)}</span></div>
+          <div className="detail-row"><span className="k">Paid from</span><span className="v">{payWith === 'referral' ? 'Referral funds' : 'Wallet'}</span></div>
           <div className="detail-row"><span className="k">Status</span><span className="v"><StatusBadge status={result.status} /></span></div>
         </div>
         <div className="modal-actions">
@@ -166,11 +176,18 @@ function Sheet({ service, onClose }: { service: Service; onClose: () => void }) 
 
         <div className="om-price">
           <div>
-            <span className="om-price-v">{formatINR(service.rate)}</span>
+            {pro ? <s className="om-price-old">{formatINR(service.rate)}</s> : null}
+            <span className="om-price-v">{formatINR(rate)}</span>
             <span className="om-price-u"> {isPack ? 'per package' : 'per 1,000'}</span>
           </div>
-          <span className="om-price-note">{tier.grade}</span>
+          {pro ? <span className="pro-price-chip"><Crown size={12} fill="currentColor" /> Pro price · {PRO_DISCOUNT_PERCENT}% off</span> : <span className="om-price-note">{tier.grade}</span>}
         </div>
+        {!pro ? (
+          <Link to="/pro" className="pro-teaser" onClick={onClose}>
+            <Crown size={14} fill="currentColor" />
+            <span>Pro members pay <b>{formatINR(proRate(service.rate, true))}</b> for this. Save {PRO_DISCOUNT_PERCENT}% on every order.</span>
+          </Link>
+        ) : null}
 
         <p className="om-desc">{service.description}</p>
 
@@ -402,7 +419,7 @@ function Sheet({ service, onClose }: { service: Service; onClose: () => void }) 
         ) : null}
 
         <div className="om-sum">
-          <div className="summary-line"><span>{isPack ? 'Package price' : 'Rate per 1,000'}</span><b>{formatINR(service.rate)}</b></div>
+          <div className="summary-line"><span>{isPack ? 'Package price' : 'Rate per 1,000'}{pro ? ' (Pro)' : ''}</span><b>{formatINR(rate)}</b></div>
           {isPack ? null : (
             <div className="summary-line">
               <span>{isAuto ? 'Reserved total' : isLines ? (mode === 'list' ? 'Entries' : 'Comments') : 'Quantity'}</span>
@@ -411,15 +428,19 @@ function Sheet({ service, onClose }: { service: Service; onClose: () => void }) 
           )}
           <div className="summary-line"><span>Start time</span><b>{service.avgTime}</b></div>
           <div className="summary-line"><span>Service fee</span><b style={{ color: '#047857' }}>Free</b></div>
-          <div className="summary-line"><span>Balance after</span><b style={{ color: insufficient ? '#be123c' : undefined }}>{formatINR(Math.max(0, state.balance - charge))}</b></div>
+          <div className="summary-line"><span>{payWith === 'referral' ? 'Referral funds after' : 'Balance after'}</span><b style={{ color: insufficient ? '#be123c' : undefined }}>{formatINR(Math.max(0, source - charge))}</b></div>
         </div>
 
         {insufficient ? (
           <div className="info-box warn" style={{ marginTop: 12 }}>
             <Info />
             <div>
-              You need {formatINR(charge - state.balance)} more.{' '}
-              <Link to="/add-funds" onClick={onClose} style={{ color: '#92400e', textDecoration: 'underline' }}>Add funds</Link>{' '}
+              {payWith === 'referral' ? (
+                <>You need {formatINR(charge - source)} more referral funds. Pay from your wallet instead, or{' '}</>
+              ) : (
+                <>You need {formatINR(charge - source)} more.{' '}</>
+              )}
+              <Link to="/add-funds" onClick={onClose} style={{ color: '#92400e', textDecoration: 'underline' }}>{payWith === 'referral' ? 'add funds' : 'Add funds'}</Link>{' '}
               to place this order.
             </div>
           </div>
@@ -427,8 +448,18 @@ function Sheet({ service, onClose }: { service: Service; onClose: () => void }) 
 
         {error ? <div className="error-line" role="alert" style={{ marginTop: 12, fontSize: 12.5 }}>{error}</div> : null}
 
-        <div className="secure-note">
-          <Wallet /> Paid from your wallet · {formatINR(state.balance, 0)} available
+        <div className="om-pay" role="radiogroup" aria-label="Payment source">
+          <button type="button" role="radio" aria-checked={payWith === 'wallet'} className={`om-pay-opt ${payWith === 'wallet' ? 'on' : ''}`} onClick={() => setPayPref('wallet')}>
+            <Wallet /> <span>Pay from wallet</span> <b>{formatINR(state.balance, 0)}</b>
+          </button>
+          {refAvail > 0 ? (
+            <>
+              <div className="om-pay-or"><span>or pay with referral funds</span></div>
+              <button type="button" role="radio" aria-checked={payWith === 'referral'} className={`om-pay-opt ref ${payWith === 'referral' ? 'on' : ''}`} onClick={() => setPayPref('referral')}>
+                <Gift /> <span>Referral funds</span> <b>{formatINR(refAvail, 0)}</b>
+              </button>
+            </>
+          ) : null}
         </div>
         <div className="om-bar">
           <div className="om-bar-total">

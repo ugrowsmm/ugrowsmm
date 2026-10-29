@@ -10,6 +10,7 @@ import {
   ArrowLeft,
   ArrowRight,
   Check,
+  Crown,
   Eye,
   EyeOff,
   Gift,
@@ -26,6 +27,7 @@ import { PLATFORM_LABEL, SERVICES, formatFrom, startingRate } from '../lib/data'
 import { PlatformIcon } from '../components/PlatformIcon'
 import { LogoGlyph, Wordmark } from '../components/Logo'
 import InstallButton from '../components/InstallButton'
+import { PRO_PRICE_MONTH, PRO_REFERRAL_PERCENT } from '../lib/config'
 
 const FEATURES = [
   'Instant start on 20+ services — likes, views, followers',
@@ -87,9 +89,10 @@ export default function Login() {
   const linkRef = (params.get('ref') ?? '').trim().toUpperCase().slice(0, 24)
   const savedRef = (() => { try { return (localStorage.getItem('ug_ref') ?? '').toUpperCase() } catch { return '' } })()
   const inviteCode = linkRef || savedRef
+  const proIntent = !!params.get('pro') // came from the Pro page: after sign in, go back to it
   const live = apiReady()
 
-  const [view, setView] = useState<View>(inviteCode ? 'signup' : 'signin')
+  const [view, setView] = useState<View>(inviteCode || proIntent ? 'signup' : 'signin')
   const [name, setName] = useState('')
   const [email, setEmail] = useState(live ? '' : 'aarav@ugrowsmm.com')
   const [password, setPassword] = useState(live ? '' : 'demo1234')
@@ -127,7 +130,7 @@ export default function Login() {
     const profile: AccountProfile = data.profile
     signInAccount(profile)
     toast(msg.replace('{name}', profile.name || 'there'), 'Your panel is ready.', 'success')
-    navigate('/', { replace: true })
+    navigate(proIntent ? '/pro' : '/', { replace: true })
     return true
   }
   const validEmail = /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email.trim())
@@ -303,6 +306,17 @@ export default function Login() {
               <span className="brand-sub">SMM Panel</span>
             </span>
           </Link>
+
+          {view === 'signin' || view === 'signup' ? (
+            <Link to="/pro" className="login-pro" aria-label="Become a Pro Member">
+              <span className="login-pro-crown" aria-hidden="true"><Crown fill="currentColor" /></span>
+              <span className="login-pro-txt">
+                <b>Become a Pro Member</b>
+                <small>Earn {PRO_REFERRAL_PERCENT}% on every referral · from ₹{PRO_PRICE_MONTH.toLocaleString('en-IN')}/month</small>
+              </span>
+              <span className="login-pro-shine" aria-hidden="true" />
+            </Link>
+          ) : null}
 
           {view === 'signin' || view === 'signup' ? (
             <div className="auth-tabs" role="tablist" aria-label="Account" data-active={view}>

@@ -1,4 +1,5 @@
 import { useEffect, useRef, useState } from 'react'
+import { Link, useNavigate, useSearchParams } from 'react-router-dom'
 import { BadgeCheck, Clock, Loader2, QrCode, ShieldCheck, Smartphone, Wallet, Zap } from 'lucide-react'
 import { useStore } from '../lib/store'
 import { apiReady } from '../lib/api'
@@ -28,7 +29,12 @@ const upiQuery = (p: Pending) =>
 
 export default function AddFunds() {
   const { state, addFunds, refreshAccount, toast } = useStore()
-  const [amount, setAmount] = useState(500)
+  const [params] = useSearchParams()
+  const navigate = useNavigate()
+  // coming from the Pro page: the missing amount is already filled in
+  const forPro = params.get('for') === 'pro'
+  const asked = Math.ceil(Number(params.get('amount')))
+  const [amount, setAmount] = useState(Number.isFinite(asked) && asked >= 10 && asked <= 50000 ? asked : 500)
   const [busy, setBusy] = useState(false)
   const [pending, setPending] = useState<Pending | null>(null)
   const [qr, setQr] = useState('')
@@ -109,6 +115,12 @@ export default function AddFunds() {
         <div className="pill lime">Balance {formatINR(state.balance)}</div>
       </div>
 
+      {forPro ? (
+        <div style={{ marginBottom: 16 }}>
+          <InfoBox>You need {formatINR(amount, 0)} more to activate Pro. We filled in the amount for you. After payment, go back to the Pro page to finish.</InfoBox>
+        </div>
+      ) : null}
+
       {state.refBy && state.bonus === 'none' ? (
         <div style={{ marginBottom: 16 }}>
           <BonusBanner note={`You joined with code ${state.refBy}. Add ₹100 or more and your free 50,000 Instagram views unlock instantly.`} />
@@ -154,7 +166,10 @@ export default function AddFunds() {
         <div className="stack">
           <InfoBox>Payments are confirmed automatically. If money was deducted but your balance did not update within 10 minutes, raise a ticket from Support with your UPI reference.</InfoBox>
           <div className="card card-pad">
-            <div className="card-title" style={{ marginBottom: 8 }}>Recent top-ups</div>
+            <div className="between" style={{ marginBottom: 8 }}>
+              <div className="card-title">Recent top-ups</div>
+              <Link to="/billing" className="text-btn">View all</Link>
+            </div>
             {deposits.length === 0 ? <span className="small muted">No top-ups yet.</span> : deposits.map((t) => (
               <div key={t.id} className="detail-row"><span className="k">{timeAgo(t.createdAt)}</span><span className="v">+{formatINR(t.amount)}</span></div>
             ))}
@@ -167,7 +182,7 @@ export default function AddFunds() {
           <>
             <div className="modal-icon success"><BadgeCheck /></div>
             <ModalHead id="pay-title" title="Payment received" subtitle={`${formatINR(pending.amount)} has been added to your wallet.`} onClose={close} />
-            <button type="button" className="btn btn-primary btn-block" onClick={close}>Done</button>
+            <button type="button" className="btn btn-primary btn-block" onClick={() => { close(); if (forPro) navigate('/pro') }}>{forPro ? 'Continue to Pro' : 'Done'}</button>
           </>
         ) : pending ? (
           <>

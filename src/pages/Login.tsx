@@ -312,7 +312,7 @@ export default function Login() {
               <span className="login-pro-crown" aria-hidden="true"><Crown fill="currentColor" /></span>
               <span className="login-pro-txt">
                 <b>Become a Pro Member</b>
-                <small>Earn {PRO_REFERRAL_PERCENT}% on every referral · from ₹{PRO_PRICE_MONTH.toLocaleString('en-IN')}/month</small>
+                <small>Earn {PRO_REFERRAL_PERCENT}% on every referral. From ₹{PRO_PRICE_MONTH.toLocaleString('en-IN')}/month</small>
               </span>
               <span className="login-pro-shine" aria-hidden="true" />
             </Link>

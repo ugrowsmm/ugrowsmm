@@ -1,0 +1,262 @@
+/* ============================================================
+   UGrowSMM — premium layer (loaded after styles.css)
+   1. smoothness   2. scroll-to-reveal   3. Pro x theme blend   4. legibility
+   Nothing here changes fonts or layout: same Sora / Plus Jakarta Sans, same spacing.
+   ============================================================ */
+
+:root {
+  --ease-premium: cubic-bezier(0.16, 1, 0.3, 1);
+  /* a touch darker so small grey text stays readable (was #5b6472 / #475467) */
+  --faint: #4b5565;
+  --muted: #414b5d;
+}
+
+/* ---------- 1. smoothness ---------- */
+
+/* Lenis does the smooth scrolling on desktop and phones use their own momentum.
+   A CSS "smooth" on top of that made jumps (route change, anchors) animate twice. */
+html {
+  scroll-behavior: auto;
+}
+
+/* When a popup locks the page, the scrollbar used to vanish and the whole layout jumped sideways. */
+@media (hover: hover) and (pointer: fine) {
+  html {
+    scrollbar-gutter: stable;
+  }
+}
+
+/* The big fixed background glow gets its own GPU layer, so scrolling never repaints it. */
+body::before {
+  contain: strict;
+  transform: translateZ(0);
+}
+
+/* Page change: a quick fade only. The blocks inside carry the motion (see section 2). */
+.page {
+  animation: pageFade 0.35s ease both;
+}
+@keyframes pageFade {
+  from {
+    opacity: 0;
+  }
+}
+
+/* ---------- 2. scroll-to-reveal ---------- */
+
+html.rv-on [data-rv] {
+  --rv-x: 0px;
+  --rv-y: 34px;
+  --rv-s: 0.985;
+}
+html.rv-on [data-rv][data-rv-k='head'] {
+  --rv-y: 22px;
+  --rv-s: 1;
+}
+html.rv-on [data-rv][data-rv-k='hero'] {
+  --rv-y: 44px;
+  --rv-s: 1;
+}
+html.rv-on [data-rv][data-rv-k='art'] {
+  --rv-x: 36px;
+  --rv-y: 26px;
+  --rv-s: 0.97;
+}
+html.rv-on [data-rv][data-rv-k='pro'] {
+  --rv-y: 48px;
+  --rv-s: 0.965;
+}
+
+/* waiting: invisible and slightly low */
+html.rv-on [data-rv='0'] {
+  opacity: 0;
+  transform: translate3d(var(--rv-x), var(--rv-y), 0) scale(var(--rv-s));
+}
+
+/* playing: only the "from" frame is defined. After the animation the element simply returns to its
+   own normal style, so hover lifts, shadows and transitions keep working. */
+html.rv-on [data-rv='1'] {
+  animation: rvIn 1.05s var(--ease-premium) var(--rv-d, 0ms) backwards;
+}
+@keyframes rvIn {
+  from {
+    opacity: 0;
+    transform: translate3d(var(--rv-x), var(--rv-y), 0) scale(var(--rv-s));
+  }
+}
+
+@media print {
+  [data-rv] {
+    opacity: 1 !important;
+    transform: none !important;
+    animation: none !important;
+  }
+}
+
+/* ---------- 3. Pro: stays gold, but now clearly part of the orange + sky family ---------- */
+
+/* hero: gold glow on top, panel-orange warmth bottom-left, panel-sky glint top-right */
+.pro-hero {
+  background:
+    radial-gradient(60% 55% at 100% 0%, rgba(56, 189, 248, 0.16), transparent 62%),
+    radial-gradient(65% 65% at 0% 100%, rgba(249, 115, 22, 0.22), transparent 64%),
+    radial-gradient(120% 90% at 50% -10%, rgba(247, 211, 92, 0.28), transparent 60%),
+    linear-gradient(160deg, var(--pro-ink-2), var(--pro-ink) 70%);
+}
+/* one slow golden sweep across the hero when it appears */
+.pro-hero::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  background: linear-gradient(105deg, transparent 38%, rgba(255, 243, 189, 0.1) 50%, transparent 62%);
+  transform: translateX(-120%);
+}
+.pro-hero[data-rv='1']::after,
+.pro-hero[data-rv='x']::after {
+  animation: proSweep 2.6s var(--ease-premium) 0.5s 1 both;
+}
+@keyframes proSweep {
+  from {
+    transform: translateX(-120%);
+  }
+  to {
+    transform: translateX(120%);
+  }
+}
+.pro-hero > * {
+  position: relative;
+  z-index: 1;
+}
+.pro-hero-stats > div {
+  border-color: rgba(247, 211, 92, 0.34);
+  background: linear-gradient(160deg, rgba(255, 243, 189, 0.09), rgba(249, 115, 22, 0.06));
+}
+
+/* light Pro cards: faint sky corner + orange hairline on top, gold body unchanged */
+.pro-calc,
+.pro-help,
+.service-card.pro,
+.tier-card.pro,
+.cg-card.pro,
+.ts-card.pro {
+  background-image: radial-gradient(110% 70% at 100% 0%, rgba(56, 189, 248, 0.1), transparent 58%);
+  background-repeat: no-repeat;
+}
+.pro-calc {
+  background-color: #fffbeb;
+}
+.pro-benefit {
+  position: relative;
+  overflow: hidden;
+}
+.pro-benefit::before {
+  content: '';
+  position: absolute;
+  inset: 0 0 auto 0;
+  height: 3px;
+  background: linear-gradient(90deg, #f97316, #f7d35c 55%, #38bdf8);
+  opacity: 0.9;
+}
+.pro-benefit:first-child::before {
+  opacity: 1;
+}
+.pro-plan.on {
+  box-shadow:
+    0 26px 48px -30px rgba(201, 138, 22, 1),
+    0 0 0 4px rgba(249, 115, 22, 0.08);
+}
+.pro-tag {
+  box-shadow:
+    0 0 0 1px rgba(249, 115, 22, 0.2),
+    0 8px 18px -10px rgba(201, 138, 22, 0.95),
+    inset 0 1px 0 rgba(255, 255, 255, 0.6);
+}
+.pro-step-n {
+  box-shadow: 0 0 0 3px rgba(249, 115, 22, 0.14);
+}
+
+/* ---------- 4. legibility: small / pale text gets a little more weight ---------- */
+
+/* tiny captions (10 to 10.5px) */
+.footer-copy,
+.footer-tag,
+.legal-footer-copy,
+.legal-footer-right,
+.legal-footer-brand small,
+.legal-side-help,
+.mkt-footer-bottom,
+.mkt-mock-foot,
+.mkt-final-meta,
+.mkt-float span:not(.mkt-float-icon),
+.mkt-review-by span:not(.avatar),
+.notif-row .d,
+.activity-row .w,
+.endpoint .desc,
+.order-progress .pmeta,
+.order-right .oid,
+.pay-method .d,
+.quick-action .d,
+.range-marks,
+.secure-note,
+.service-meta-row,
+.service-option .s-meta,
+.service-option .s-rate span,
+.amount-btn span,
+.trust-item {
+  font-weight: 600;
+}
+
+/* small body copy (11 to 12.5px) */
+.auth-legal,
+.auth-proof small,
+.install-step .d,
+.legal-meta,
+.mkt-rating,
+.service-card .cat,
+.sidebar-user .mail,
+.hint-line,
+.mini-metric .k,
+.mkt-footer-brand p,
+.order-sub,
+.switch-row .d,
+.upi-ours,
+.bill-sub,
+.crumb,
+.pro-fine,
+.mkt-feature p,
+.mkt-step p,
+.summary-total .lbl,
+.empty,
+.bonus-text,
+.cg-card-desc,
+.cg-story-main p,
+.mkt-faq-answer > p,
+.mkt-perks small,
+.modal p.sub,
+.summary-line,
+.tier-blurb,
+.tier-section-head p,
+.page-head p {
+  font-weight: 500;
+}
+
+/* Pro text on dark gold-brown */
+.pro-lead {
+  font-weight: 500;
+  color: #f0e4be;
+}
+.pro-hero-stats span {
+  font-weight: 600;
+  color: #ecdfb4;
+}
+.pro-benefit:first-child p {
+  font-weight: 500;
+  color: #ead9a8;
+}
+.pro-benefit p,
+.pro-steps p,
+.pro-help p,
+.pro-calc-head p {
+  font-weight: 500;
+}

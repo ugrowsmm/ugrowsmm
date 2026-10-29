@@ -1,15 +1,17 @@
 import { useState } from 'react'
-import { BadgeCheck, Gift, Landmark, Users, Wallet } from 'lucide-react'
-import { REFERRAL_PERCENT_DEFAULT, useStore } from '../lib/store'
+import { BadgeCheck, Crown, Gift, Landmark, Users, Wallet } from 'lucide-react'
+import { PRO_DISCOUNT_PERCENT, PRO_REFERRAL_PERCENT, REFERRAL_PERCENT_DEFAULT, isProState, referralAvailable, referralPercentOf, useStore } from '../lib/store'
 import { formatINR, timeAgo } from '../lib/data'
 import BonusBanner from '../components/BonusBanner'
+import { ProButton, ProTag } from '../components/ProBits'
 import { CopyButton, InfoBox, Modal, ModalHead, Segmented } from '../components/ui'
 
 export default function Referral() {
   const { state, requestWithdraw, toast } = useStore()
-  const { referral, codePercents, withdrawals } = state
-  const percent = codePercents[referral.code] ?? REFERRAL_PERCENT_DEFAULT
-  const available = Math.max(0, Math.round((referral.earned - referral.withdrawn) * 100) / 100)
+  const { referral, withdrawals } = state
+  const pro = isProState(state)
+  const percent = referralPercentOf(state)
+  const available = referralAvailable(referral)
   const link = `${location.origin}${location.pathname}#/login?ref=${referral.code}`
   const promo = `Use my code ${referral.code} on UGrowSMM and get 50,000 FREE Instagram views on your first ₹100 top-up. Sign up here: ${link}`
 
@@ -43,7 +45,7 @@ export default function Referral() {
       <div className="page-head">
         <div>
           <span className="eyebrow">Affiliate</span>
-          <h1>Refer &amp; earn {percent}%</h1>
+          <h1>Refer &amp; earn {percent}% {pro ? <ProTag /> : null}</h1>
           <p>Earn {percent}% of every wallet top-up made by people who join with your link. Withdraw your referral earnings any time.</p>
         </div>
         <button type="button" className="btn btn-lime" onClick={() => setOpen(true)} disabled={available < 100}>
@@ -51,13 +53,32 @@ export default function Referral() {
         </button>
       </div>
 
+      {pro ? (
+        <div className="pro-ref pro-ref-on">
+          <span className="pro-ref-crown" aria-hidden="true"><Crown fill="currentColor" /></span>
+          <div>
+            <b>You earn the Pro rate: {percent}% on every top-up</b>
+            <p>Your referrals' top-ups pay you the full margin. Use the funds for your own orders or withdraw them.</p>
+          </div>
+        </div>
+      ) : (
+        <div className="pro-ref">
+          <span className="pro-ref-crown" aria-hidden="true"><Crown fill="currentColor" /></span>
+          <div className="pro-ref-copy">
+            <b>Earn {PRO_REFERRAL_PERCENT}% instead of {REFERRAL_PERCENT_DEFAULT}% with Pro</b>
+            <p>Pro members keep the full {PRO_REFERRAL_PERCENT}% margin on every referral top-up, and pay {PRO_DISCOUNT_PERCENT}% less on their own orders.</p>
+          </div>
+          <ProButton to="/pro" label="Become a Pro Member" />
+        </div>
+      )}
+
       <BonusBanner variant="creator" note="Tell your audience: use my code and get 50,000 free Instagram views on the first ₹100 top-up. You earn your referral percentage on every top-up they make." />
 
       <div className="stats" style={{ marginTop: 16 }}>
         <div className="stat"><div className="stat-top">Total earned <span className="icon"><Gift /></span></div><div className="stat-value">{formatINR(referral.earned)}</div></div>
         <div className="stat"><div className="stat-top">Available <span className="icon"><Wallet /></span></div><div className="stat-value">{formatINR(available)}</div></div>
-        <div className="stat"><div className="stat-top">Withdrawn <span className="icon"><Landmark /></span></div><div className="stat-value">{formatINR(referral.withdrawn)}</div></div>
-        <div className="stat"><div className="stat-top">Your rate <span className="icon"><Users /></span></div><div className="stat-value">{percent}%</div></div>
+        <div className="stat"><div className="stat-top">Withdrawn / used <span className="icon"><Landmark /></span></div><div className="stat-value">{formatINR(referral.withdrawn + referral.spent)}</div></div>
+        <div className={`stat ${pro ? 'stat-pro' : ''}`}><div className="stat-top">Your rate <span className="icon">{pro ? <Crown /> : <Users />}</span></div><div className="stat-value">{percent}%</div></div>
       </div>
 
       <div className="grid-2 section">
@@ -80,7 +101,7 @@ export default function Referral() {
             <div className="api-key-box"><code>{referral.code}</code><div className="actions"><CopyButton text={referral.code} onCopied={() => toast('Code copied')} /></div></div>
           </div>
 
-          <InfoBox>Only earnings from referrals can be withdrawn. Your wallet balance is used for orders and is not withdrawable. Minimum withdrawal ₹100.</InfoBox>
+          <InfoBox>Only earnings from referrals can be withdrawn. Your wallet balance is used for orders and is not withdrawable. You can also spend referral funds on orders. Minimum withdrawal ₹100.</InfoBox>
         </div>
         <div className="card card-pad">
           <div className="card-title" style={{ marginBottom: 8 }}>Withdrawals</div>

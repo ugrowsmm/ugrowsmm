@@ -3,6 +3,7 @@ import { Link, NavLink, Outlet, useLocation, useNavigate } from 'react-router-do
 import {
   ArrowRight,
   Bell,
+  Crown,
   Gift,
   ShieldCheck,
   LifeBuoy,
@@ -21,7 +22,8 @@ import {
   X,
   Zap,
 } from 'lucide-react'
-import { useStore } from '../lib/store'
+import { isProState, useStore } from '../lib/store'
+import { ProAvatar, ProTag } from './ProBits'
 import { formatINR, timeAgo } from '../lib/data'
 import { LogoGlyph, Wordmark } from './Logo'
 import SiteFooter from './SiteFooter'
@@ -45,6 +47,7 @@ const SECONDARY_NAV = [
 
 const PAGE_META: Record<string, { title: string; crumb: string }> = {
   '/referral': { title: 'Refer & earn', crumb: 'Referral' },
+  '/pro': { title: 'Pro membership', crumb: 'Pro' },
   '/support': { title: 'Support', crumb: 'Support' },
   '/': { title: 'Overview', crumb: 'Overview' },
   '/new-order': { title: 'New order', crumb: 'New order' },
@@ -93,6 +96,15 @@ function SidebarNav({ onNavigate }: { onNavigate?: () => void }) {
 
       <div className="nav-group">
         <div className="nav-label">Billing</div>
+        <NavLink
+          to="/pro"
+          onClick={onNavigate}
+          className={({ isActive }) => `nav-item nav-pro ${isActive ? 'active' : ''}`}
+        >
+          <Crown fill="currentColor" />
+          <span>{isProState(state) ? 'Pro membership' : 'Become Pro'}</span>
+          {isProState(state) ? null : <span className="nav-badge pro">30%</span>}
+        </NavLink>
         {SECONDARY_NAV.slice(0, 2).map(({ to, label, icon: Icon }) => (
           <NavLink
             key={to}
@@ -152,10 +164,11 @@ function SidebarFooter({ onNavigate }: { onNavigate?: () => void }) {
           className="sidebar-user"
           style={{ flex: 1 }}
         >
-          <span className="avatar">{initials(state.profile.name)}</span>
+          <ProAvatar pro={isProState(state)}><span className="avatar">{initials(state.profile.name)}</span></ProAvatar>
           <span className="grow">
             <span className="name" style={{ display: 'block' }}>
               {state.profile.name}
+              {isProState(state) ? <Crown size={12} fill="currentColor" className="pro-name-crown" aria-label="Pro member" /> : null}
             </span>
             <span className="mail" style={{ display: 'block' }}>
               {state.profile.email}
@@ -268,6 +281,8 @@ function Topbar({ onMenu }: { onMenu: () => void }) {
           <b style={{ color: '#101828' }}>{formatINR(state.balance)}</b>
         </Link>
 
+        {isProState(state) ? <ProTag compact={false} /> : null}
+
         <div style={{ position: 'relative' }} ref={popRef}>
           <div className="row" style={{ gap: 8 }}>
             <button
@@ -291,9 +306,11 @@ function Topbar({ onMenu }: { onMenu: () => void }) {
               aria-label={`Account menu — ${initials(state.profile.name)}`}
               style={{ background: 'none', border: 0, padding: 0, cursor: 'pointer' }}
             >
-              <span className="avatar" aria-hidden="true">
-                {initials(state.profile.name)}
-              </span>
+              <ProAvatar pro={isProState(state)}>
+                <span className="avatar" aria-hidden="true">
+                  {initials(state.profile.name)}
+                </span>
+              </ProAvatar>
             </button>
           </div>
 
@@ -349,6 +366,9 @@ function Topbar({ onMenu }: { onMenu: () => void }) {
               </Link>
               <Link to="/add-funds" className="popover-item" role="menuitem">
                 <Wallet size={14} /> Add funds
+              </Link>
+              <Link to="/pro" className="popover-item pro-item" role="menuitem">
+                <Crown size={14} fill="currentColor" /> {isProState(state) ? 'Pro membership' : 'Become a Pro member'}
               </Link>
               {canAccessAdmin(state.profile.email) ? (
                 <Link to="/admin" className="popover-item" role="menuitem">

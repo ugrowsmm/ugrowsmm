@@ -1,9 +1,9 @@
 import { useState } from 'react'
-import { CheckCircle2, Clock, Loader2, Send } from 'lucide-react'
-import { useStore, type Ticket } from '../lib/store'
+import { CheckCircle2, Clock, Crown, Loader2, Send } from 'lucide-react'
+import { isProState, useStore, type Ticket } from '../lib/store'
 import { apiReady, rpc } from '../lib/api'
 import { timeAgo } from '../lib/data'
-import { WEB3FORMS_KEY } from '../lib/config'
+import { PRO_SUPPORT_EMAIL, WEB3FORMS_KEY } from '../lib/config'
 import { InfoBox } from '../components/ui'
 
 const TYPES = ['Query', 'Complaint', 'Order issue', 'Payment issue']
@@ -74,6 +74,15 @@ export default function Support() {
           <p>Raise a query or complaint. We coordinate with you over email and resolve most tickets within {RESOLUTION_TIME}.</p>
         </div>
       </div>
+      {isProState(state) ? (
+        <div className="pro-ref pro-ref-on">
+          <span className="pro-ref-crown" aria-hidden="true"><Crown fill="currentColor" /></span>
+          <div>
+            <b>Pro priority support, 24/7</b>
+            <p>Email <a href={`mailto:${PRO_SUPPORT_EMAIL}`}>{PRO_SUPPORT_EMAIL}</a> any time. Mention your account email so we can find you fast.</p>
+          </div>
+        </div>
+      ) : null}
       <div className="grid-2">
         <div className="card card-pad stack">
           {ticket ? (

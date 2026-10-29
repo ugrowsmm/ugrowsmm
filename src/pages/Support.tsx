@@ -79,7 +79,7 @@ export default function Support() {
           <span className="pro-ref-crown" aria-hidden="true"><Crown fill="currentColor" /></span>
           <div>
             <b>Pro priority support, 24/7</b>
-            <p>Email <a href={`mailto:${PRO_SUPPORT_EMAIL}`}>{PRO_SUPPORT_EMAIL}</a> any time. Mention your account email so we can find you fast.</p>
+            <p>Email <a href={`mailto:${PRO_SUPPORT_EMAIL}`}>{PRO_SUPPORT_EMAIL}</a> any time. Write your account email so we can find you fast.</p>
           </div>
         </div>
       ) : null}

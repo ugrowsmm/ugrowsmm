@@ -22,9 +22,26 @@ import {
 } from './data'
 import { apiReady, rpc } from './api'
 import { supabase } from './supabase'
-import { REFERRAL_PERCENT_DEFAULT } from './config'
+import { PRO_DISCOUNT_PERCENT, PRO_PRICE_MONTH, PRO_PRICE_YEAR, PRO_REFERRAL_PERCENT, REFERRAL_PERCENT_DEFAULT } from './config'
 
-export { REFERRAL_PERCENT_DEFAULT }
+export { REFERRAL_PERCENT_DEFAULT, PRO_REFERRAL_PERCENT, PRO_DISCOUNT_PERCENT }
+
+export type ProPlan = 'monthly' | 'yearly'
+export const PRO_PLANS: Record<ProPlan, { price: number; days: number; label: string }> = {
+  monthly: { price: PRO_PRICE_MONTH, days: 30, label: 'Monthly' },
+  yearly: { price: PRO_PRICE_YEAR, days: 365, label: 'Yearly' },
+}
+
+/** Pro is active while its end date is in the future. */
+export const isProState = (s: { pro: { until: string } }) => !!s.pro.until && new Date(s.pro.until).getTime() > Date.now()
+/** Price a Pro member pays: normal rate minus the Pro discount. */
+export const proRate = (rate: number, pro: boolean) => (pro ? Math.round(rate * (1 - PRO_DISCOUNT_PERCENT / 100) * 100) / 100 : rate)
+/** Referral funds the user can still use (withdraw or spend on orders). */
+export const referralAvailable = (r: { earned: number; withdrawn: number; spent: number }) =>
+  Math.max(0, Math.round((r.earned - r.withdrawn - r.spent) * 100) / 100)
+/** Cashback % for this user's code: an admin-set value wins, otherwise Pro earns the Pro rate. */
+export const referralPercentOf = (s: { codePercents: Record<string, number>; referral: { code: string }; pro: { until: string } }) =>
+  s.codePercents[s.referral.code] ?? (isProState(s) ? PRO_REFERRAL_PERCENT : REFERRAL_PERCENT_DEFAULT)
 
 export interface Profile {
   name: string
@@ -68,11 +85,12 @@ export interface AccountProfile { email: string; name: string; code: string; ref
 
 export interface AppState {
   real: boolean
+  pro: { until: string; plan: string }
   tickets: Ticket[]
   refBy: string
   bonus: 'none' | 'ready' | 'claimed'
   unpaid: number
-  referral: { code: string; earned: number; withdrawn: number }
+  referral: { code: string; earned: number; withdrawn: number; spent: number }
   withdrawals: Withdrawal[]
   codePercents: Record<string, number>
   logins: { email: string; at: string }[]
@@ -108,6 +126,8 @@ interface PlaceOrderInput {
   note?: string
   /** auto services: quantity range per post, number of posts and delay in minutes. */
   auto?: { min: number; max: number; posts: number; delay: number }
+  /** which balance pays for the order (default: wallet). */
+  payWith?: 'wallet' | 'referral'
 }
 
 interface PlaceOrderResult {
@@ -131,10 +151,12 @@ interface StoreValue {
   adminDemoOrders: (count: number) => void
   adminReferralEarning: (amount: number) => void
   adminDebit: (kind: 'paid' | 'unpaid', amount: number) => void
-  setCashback: (code: string, percent: number) => void
+  setCashback: (code: string, percent: number | null) => void
   addTicket: (ticket: Ticket) => void
   syncTickets: (rows: Ticket[]) => void
   adminSetTicketStatus: (id: string, status: TicketStatus) => void
+  buyPro: (plan: ProPlan) => Promise<{ ok: boolean; error?: string }>
+  adminSetPro: (days: number) => void
   adminSetOrderStatus: (id: string, status: OrderStatus, refund: boolean) => void
   adminSetWithdrawalStatus: (id: string, status: string) => void
   placeOrder: (input: PlaceOrderInput) => Promise<PlaceOrderResult>
@@ -160,10 +182,11 @@ const makeKey = () =>
 const initialState = (): AppState => ({
   real: false,
   signedIn: false,
+  pro: { until: '', plan: '' },
   refBy: '',
   bonus: 'none',
   unpaid: 0,
-  referral: { code: 'UGAARAV', earned: 0, withdrawn: 0 },
+  referral: { code: 'UGAARAV', earned: 0, withdrawn: 0, spent: 0 },
   withdrawals: [],
   tickets: [],
   codePercents: {},
@@ -209,6 +232,7 @@ const loadState = (): AppState => {
       ...parsed,
       profile: { ...base.profile, ...parsed.profile },
       notifications: { ...base.notifications, ...parsed.notifications },
+      pro: { ...base.pro, ...parsed.pro },
       referral: { ...base.referral, ...parsed.referral },
       withdrawals: Array.isArray(parsed.withdrawals) ? parsed.withdrawals : [],
       tickets: Array.isArray(parsed.tickets) ? parsed.tickets : [],
@@ -311,7 +335,7 @@ export function StoreProvider({ children }: { children: ReactNode }) {
         balance: 0,
         orders: [],
         transactions: [],
-        referral: { code: p.code, earned: 0, withdrawn: 0 },
+        referral: { code: p.code, earned: 0, withdrawn: 0, spent: 0 },
         profile: { name: p.name, email: p.email, username: p.email.split('@')[0], phone: '', country: 'India', joined: now.slice(0, 10) },
         apiKey: 'ug_live_' + rnd,
         logins: [{ email: p.email, at: now }],
@@ -354,7 +378,8 @@ export function StoreProvider({ children }: { children: ReactNode }) {
             profile: { ...prev.profile, name: r.profile?.name ?? prev.profile.name },
             balance: Number(r.balance),
             unpaid: Number(r.unpaid),
-            referral: { code: r.profile?.code ?? prev.referral.code, earned: Number(r.referral.earned), withdrawn: Number(r.referral.withdrawn) },
+            referral: { code: r.profile?.code ?? prev.referral.code, earned: Number(r.referral.earned), withdrawn: Number(r.referral.withdrawn), spent: Number(r.referral.spent) || 0 },
+            pro: { until: String(r.pro?.until ?? ''), plan: String(r.pro?.plan ?? '') },
             orders: r.orders,
             transactions: r.transactions,
             withdrawals: r.withdrawals,
@@ -377,7 +402,7 @@ export function StoreProvider({ children }: { children: ReactNode }) {
   }, [state.signedIn, state.real, refreshAccount])
 
   const placeOrder = useCallback(
-    async ({ serviceId, link, quantity, dripfeed, comments, answer, auto }: PlaceOrderInput): Promise<PlaceOrderResult> => {
+    async ({ serviceId, link, quantity, dripfeed, comments, answer, auto, payWith = 'wallet' }: PlaceOrderInput): Promise<PlaceOrderResult> => {
       const service = SERVICES.find((s) => s.id === serviceId)
       if (!service) return { ok: false, error: 'Please choose a service to continue.' }
       if (!link.trim()) return { ok: false, error: service.mode === 'auto' ? 'Add the username or profile link to boost.' : 'Add the target link for this order.' }
@@ -409,15 +434,19 @@ export function StoreProvider({ children }: { children: ReactNode }) {
           return { ok: false, error: `Maximum quantity for this service is ${service.max.toLocaleString('en-IN')}.` }
       }
 
-      const charge = priceOf(service, quantity)
+      // Pro members pay the Pro rate on their own orders
+      const charge = priceOf({ mode: service.mode, rate: proRate(service.rate, isProState(state)) }, quantity)
 
       if (state.real && apiReady()) {
         // Services and provider ordering are switched on in the next step
         return { ok: false, error: 'Ordering opens very soon. Your balance is safe, please check back shortly.' }
       }
 
-      const mock = state.unpaid >= charge
-      if (!mock && charge > state.balance)
+      const fromReferral = payWith === 'referral'
+      const mock = !fromReferral && state.unpaid >= charge
+      if (fromReferral && charge > referralAvailable(state.referral))
+        return { ok: false, error: 'Not enough referral funds for this order. Pay from your wallet or add funds.' }
+      if (!fromReferral && !mock && charge > state.balance)
         return { ok: false, error: 'Insufficient balance. Add funds to place this order.' }
 
       const id = 'NX-' + Math.floor(88300 + Math.random() * 600)
@@ -439,14 +468,15 @@ export function StoreProvider({ children }: { children: ReactNode }) {
 
       setState((prev) => ({
         ...prev,
-        balance: mock ? prev.balance : Math.round((prev.balance - charge) * 100) / 100,
+        balance: mock || fromReferral ? prev.balance : Math.round((prev.balance - charge) * 100) / 100,
         unpaid: mock ? Math.round((prev.unpaid - charge) * 100) / 100 : prev.unpaid,
+        referral: fromReferral ? { ...prev.referral, spent: Math.round((prev.referral.spent + charge) * 100) / 100 } : prev.referral,
         orders: [order, ...prev.orders],
         transactions: [
           {
             id: 'TX-' + Math.floor(5600 + Math.random() * 300),
             type: 'order',
-            label: service.mode === 'package' ? service.name : `${service.name} · ${quantity.toLocaleString('en-IN')}`,
+            label: (service.mode === 'package' ? service.name : `${service.name} · ${quantity.toLocaleString('en-IN')}`) + (fromReferral ? ' · Referral funds' : ''),
             amount: charge,
             createdAt: new Date().toISOString(),
           },
@@ -458,7 +488,7 @@ export function StoreProvider({ children }: { children: ReactNode }) {
 
       return { ok: true, order }
     },
-    [state.balance, state.unpaid, state.profile.email, state.real, refreshAccount],
+    [state.balance, state.unpaid, state.referral, state.pro, state.profile.email, state.real, refreshAccount],
   )
 
   const addFunds = useCallback((amount: number, method: string) => {
@@ -482,7 +512,7 @@ export function StoreProvider({ children }: { children: ReactNode }) {
 
   const requestWithdraw = useCallback(
     async (amount: number, method: string, details: string) => {
-      const avail = Math.round((state.referral.earned - state.referral.withdrawn) * 100) / 100
+      const avail = referralAvailable(state.referral)
       if (!(amount >= 100)) return { ok: false, error: 'Minimum withdrawal is ₹100.' }
       if (amount > avail) return { ok: false, error: 'Amount is more than your available referral funds.' }
       if (state.real && apiReady()) {
@@ -525,6 +555,39 @@ export function StoreProvider({ children }: { children: ReactNode }) {
     [state.bonus, state.profile.email, state.real, refreshAccount],
   )
 
+  /** Pro membership paid from the wallet. Real accounts: the database takes the money and sets the end date. */
+  const buyPro = useCallback(
+    async (plan: ProPlan) => {
+      const p = PRO_PLANS[plan]
+      if (state.real && apiReady()) {
+        const { error } = await rpc('buy_pro', { p_plan: plan })
+        if (error) return { ok: false, error: error === 'insufficient' ? 'Not enough wallet balance. Add funds and try again.' : 'Could not activate Pro. Please try again.' }
+        await refreshAccount()
+        return { ok: true }
+      }
+      if (state.balance < p.price) return { ok: false, error: 'Not enough wallet balance. Add funds and try again.' }
+      setState((prev) => {
+        const base = isProState(prev) ? new Date(prev.pro.until).getTime() : Date.now()
+        return {
+          ...prev,
+          balance: Math.round((prev.balance - p.price) * 100) / 100,
+          pro: { until: new Date(base + p.days * 864e5).toISOString(), plan },
+          transactions: [{ id: 'TX-' + Math.floor(5600 + Math.random() * 300), type: 'order' as const, label: `Pro membership · ${p.label}`, amount: p.price, createdAt: new Date().toISOString() }, ...prev.transactions],
+        }
+      })
+      return { ok: true }
+    },
+    [state.balance, state.real, refreshAccount],
+  )
+
+  /** Demo mode only (admin acts on the local account). days = 0 removes Pro. */
+  const adminSetPro = useCallback((days: number) => {
+    setState((prev) => ({
+      ...prev,
+      pro: days > 0 ? { until: new Date((isProState(prev) ? new Date(prev.pro.until).getTime() : Date.now()) + days * 864e5).toISOString(), plan: 'admin' } : { until: '', plan: '' },
+    }))
+  }, [])
+
   const adminCredit = useCallback((kind: 'paid' | 'unpaid', amount: number) => {
     setState((prev) => ({
       ...prev,
@@ -561,8 +624,14 @@ export function StoreProvider({ children }: { children: ReactNode }) {
     setState((prev) => ({ ...prev, referral: { ...prev.referral, earned: prev.referral.earned + amount } }))
   }, [])
 
-  const setCashback = useCallback((code: string, percent: number) => {
-    setState((prev) => ({ ...prev, codePercents: { ...prev.codePercents, [code]: percent } }))
+  /** percent = null puts the code back to the default (10%, or the Pro rate while Pro). */
+  const setCashback = useCallback((code: string, percent: number | null) => {
+    setState((prev) => {
+      const next = { ...prev.codePercents }
+      if (percent === null) delete next[code]
+      else next[code] = percent
+      return { ...prev, codePercents: next }
+    })
   }, [])
 
   const addTicket = useCallback((ticket: Ticket) => {
@@ -671,6 +740,8 @@ export function StoreProvider({ children }: { children: ReactNode }) {
       addTicket,
       syncTickets,
       adminSetTicketStatus,
+      buyPro,
+      adminSetPro,
       adminSetOrderStatus,
       adminSetWithdrawalStatus,
       placeOrder,
@@ -702,6 +773,8 @@ export function StoreProvider({ children }: { children: ReactNode }) {
       addTicket,
       syncTickets,
       adminSetTicketStatus,
+      buyPro,
+      adminSetPro,
       adminSetOrderStatus,
       adminSetWithdrawalStatus,
       placeOrder,

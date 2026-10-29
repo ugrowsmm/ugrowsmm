@@ -649,9 +649,9 @@ export default function SettingsPage() {
         <div className="modal-icon danger">
           <Trash2 />
         </div>
-        {live && state.balance + state.referral.earned - state.referral.withdrawn > 0 ? (
+        {live && state.balance + state.referral.earned - state.referral.withdrawn - state.referral.spent > 0 ? (
           <InfoBox warn>
-            You still have {formatINR(state.balance)} in your wallet and {formatINR(Math.max(0, state.referral.earned - state.referral.withdrawn))} in referral earnings. These will be lost when the account is deleted. Withdraw or use them first if you want them.
+            You still have {formatINR(state.balance)} in your wallet and {formatINR(Math.max(0, state.referral.earned - state.referral.withdrawn - state.referral.spent))} in referral earnings. These will be lost when the account is deleted. Withdraw or use them first if you want them.
           </InfoBox>
         ) : null}
         <p className="small muted" style={{ lineHeight: 1.6 }}>

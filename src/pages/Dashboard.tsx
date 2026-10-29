@@ -150,7 +150,7 @@ export default function Dashboard() {
           <span className="pro-ref-crown" aria-hidden="true"><Crown fill="currentColor" /></span>
           <div className="pro-ref-copy">
             <b>Earn like the owner with Pro</b>
-            <p>{PRO_REFERRAL_PERCENT}% on every referral top-up and your own orders at 30% less.</p>
+            <p>Get {PRO_REFERRAL_PERCENT}% on every referral and buy your own orders 30% cheaper.</p>
           </div>
           <ProButton to="/pro" label="Become a Pro Member" />
         </div>

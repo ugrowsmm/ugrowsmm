@@ -30,26 +30,26 @@ import { LogoGlyph, Wordmark } from '../components/Logo'
 import { ProButton } from '../components/ProBits'
 
 const BENEFITS = [
-  { icon: Percent, title: `${PRO_REFERRAL_PERCENT}% on every referral`, text: `We keep a ${PRO_REFERRAL_PERCENT}% profit margin after services and tech costs. Pro members get that full ${PRO_REFERRAL_PERCENT}% on every top-up from people they refer.` },
-  { icon: Tag, title: `Services ${PRO_DISCOUNT_PERCENT}% cheaper`, text: `Every order you place yourself costs ${PRO_DISCOUNT_PERCENT}% less than the normal price. The Pro price shows automatically.` },
-  { icon: Wallet, title: 'Spend your earnings', text: 'Pay for orders with your referral funds, or withdraw them to UPI or bank.' },
-  { icon: Banknote, title: 'Easy withdrawals', text: 'Request a payout in a few taps. Minimum ₹100.' },
-  { icon: ShieldCheck, title: 'Secure payments', text: 'Top-ups run through trusted UPI apps: PhonePe, GPay, Paytm and BHIM.' },
-  { icon: Headset, title: '24/7 Pro support', text: `Priority email support any time at ${PRO_SUPPORT_EMAIL}.` },
+  { icon: Percent, title: `${PRO_REFERRAL_PERCENT}% on every referral`, text: `We keep ${PRO_REFERRAL_PERCENT}% profit after paying for services and tech. Pro members get all of this ${PRO_REFERRAL_PERCENT}% when someone they refer adds money.` },
+  { icon: Tag, title: `Services ${PRO_DISCOUNT_PERCENT}% cheaper`, text: `Every order you place yourself costs ${PRO_DISCOUNT_PERCENT}% less. The Pro price shows automatically.` },
+  { icon: Wallet, title: 'Use your earnings', text: 'Pay for orders with your referral money, or withdraw it to UPI or bank.' },
+  { icon: Banknote, title: 'Easy withdrawal', text: 'Ask for your money in a few taps. Minimum ₹100.' },
+  { icon: ShieldCheck, title: 'Safe payments', text: 'Pay with trusted UPI apps: PhonePe, GPay, Paytm and BHIM.' },
+  { icon: Headset, title: '24/7 Pro support', text: `Email us any time at ${PRO_SUPPORT_EMAIL}. Pro members get answers first.` },
 ]
 
 const COMPARE: { row: string; normal: string; pro: string }[] = [
-  { row: 'Referral commission', normal: `${REFERRAL_PERCENT_DEFAULT}%`, pro: `${PRO_REFERRAL_PERCENT}%` },
-  { row: 'Price of your own orders', normal: 'Normal price', pro: `${PRO_DISCOUNT_PERCENT}% less` },
-  { row: 'Pay with referral funds', normal: 'Yes', pro: 'Yes' },
-  { row: 'Crown badge on every page', normal: '', pro: 'Yes' },
-  { row: 'Priority 24/7 support', normal: '', pro: 'Yes' },
+  { row: 'Commission on referrals', normal: `${REFERRAL_PERCENT_DEFAULT}%`, pro: `${PRO_REFERRAL_PERCENT}%` },
+  { row: 'Price of your orders', normal: 'Normal price', pro: `${PRO_DISCOUNT_PERCENT}% less` },
+  { row: 'Pay with referral money', normal: 'Yes', pro: 'Yes' },
+  { row: 'Crown tag on every page', normal: '', pro: 'Yes' },
+  { row: '24/7 Pro support', normal: '', pro: 'Yes' },
 ]
 
 const STEPS = [
-  { t: 'Go Pro', d: 'Pick a plan and activate it from your wallet.' },
-  { t: 'Share your link', d: 'Send your referral link or promo code to your audience.' },
-  { t: `Earn ${PRO_REFERRAL_PERCENT}%`, d: 'Every time they top up their wallet, the commission lands in your referral funds.' },
+  { t: 'Buy Pro', d: 'Choose a plan and pay from your wallet.' },
+  { t: 'Share your link', d: 'Send your referral link or code to your followers.' },
+  { t: `Earn ${PRO_REFERRAL_PERCENT}%`, d: 'Each time they add money, your commission comes to your referral funds.' },
 ]
 
 const fmtDate = (iso: string) => new Date(iso).toLocaleDateString('en-IN', { day: 'numeric', month: 'short', year: 'numeric' })
@@ -85,8 +85,8 @@ export default function ProPage() {
     <ProButton to={`/login?pro=${plan}`} size="lg" label={`Sign up & go Pro · ${formatINR(picked.price, 0)}`} block />
   ) : short > 0 ? (
     <>
-      <ProButton onClick={() => navigate('/add-funds')} size="lg" label={`Add ${formatINR(short, 0)} to go Pro`} block />
-      <p className="pro-fine">Pro is paid from your wallet. You have {formatINR(state.balance, 0)}, the {picked.label.toLowerCase()} plan is {formatINR(picked.price, 0)}.</p>
+      <ProButton onClick={() => navigate(`/add-funds?amount=${Math.max(10, Math.ceil(short))}&for=pro`)} size="lg" label={`Add ${formatINR(Math.ceil(short), 0)} to go Pro`} block />
+      <p className="pro-fine">Pro is paid from your wallet. Your wallet has {formatINR(state.balance, 0)}. The {picked.label.toLowerCase()} plan costs {formatINR(picked.price, 0)}. We will fill in the missing amount for you.</p>
     </>
   ) : (
     <ProButton onClick={activate} size="lg" label={busy ? 'Activating…' : `${pro ? 'Extend' : 'Activate'} Pro · ${formatINR(picked.price, 0)}`} block />
@@ -109,12 +109,12 @@ export default function ProPage() {
         <div className="pro-hero-crown" aria-hidden="true"><Crown fill="currentColor" /></div>
         <h1 className="pro-h1">Earn like the owner.</h1>
         <p className="pro-lead">
-          Our profit margin is {PRO_REFERRAL_PERCENT}% after services and tech costs. As a Pro member you keep all of it on every referral top-up, and you buy your own services {PRO_DISCOUNT_PERCENT}% cheaper.
+          We keep {PRO_REFERRAL_PERCENT}% profit after paying for services and tech. Pro members get all of this {PRO_REFERRAL_PERCENT}% on every referral, and buy their own services {PRO_DISCOUNT_PERCENT}% cheaper.
         </p>
         <div className="pro-hero-stats">
-          <div><b>{PRO_REFERRAL_PERCENT}%</b><span>commission, the full margin</span></div>
-          <div><b>−{PRO_DISCOUNT_PERCENT}%</b><span>on your own orders</span></div>
-          <div><b>24/7</b><span>Pro email support</span></div>
+          <div><b>{PRO_REFERRAL_PERCENT}%</b><span>on every referral</span></div>
+          <div><b>−{PRO_DISCOUNT_PERCENT}%</b><span>on your orders</span></div>
+          <div><b>24/7</b><span>Pro support</span></div>
         </div>
         {pro ? (
           <div className="pro-active-note"><BadgeCheck size={18} /> You are a Pro member until {fmtDate(state.pro.until)}</div>
@@ -126,10 +126,10 @@ export default function ProPage() {
       {/* calculator */}
       <section className="pro-calc" aria-labelledby="pro-calc-h">
         <div className="pro-calc-head">
-          <h2 id="pro-calc-h" className="pro-h2">What could you earn?</h2>
-          <p>Drag to set how much your referrals top up in a month.</p>
+          <h2 id="pro-calc-h" className="pro-h2">How much can you earn?</h2>
+          <p>Move the slider. Set how much money your referrals add in one month.</p>
         </div>
-        <label className="pro-calc-label" htmlFor="pro-topups">Monthly top-ups by your referrals <b>{formatINR(topups, 0)}</b></label>
+        <label className="pro-calc-label" htmlFor="pro-topups">Money added by your referrals each month <b>{formatINR(topups, 0)}</b></label>
         <input
           id="pro-topups"
           className="pro-range"
@@ -145,20 +145,20 @@ export default function ProPage() {
           <div className="pro-calc-pro">
             <span>Pro member earns</span>
             <b>{formatINR(proEarn, 0)}</b>
-            <small>per month at {PRO_REFERRAL_PERCENT}%</small>
+            <small>every month ({PRO_REFERRAL_PERCENT}%)</small>
           </div>
           <div className="pro-calc-normal">
             <span>Normal member earns</span>
             <b>{formatINR(normalEarn, 0)}</b>
-            <small>per month at {REFERRAL_PERCENT_DEFAULT}%</small>
+            <small>every month ({REFERRAL_PERCENT_DEFAULT}%)</small>
           </div>
         </div>
-        <p className="pro-fine">Illustration of the maths, not a promise. Pro members who build a large audience can reach ₹5–10 lakh a month. What you earn depends on how many people you bring and how much they top up; no income is guaranteed.</p>
+        <p className="pro-fine">This is only an example to show the maths. Pro members with a big audience can reach ₹5–10 lakh a month. What you really earn depends on how many people you bring and how much they add. Earning is not guaranteed.</p>
       </section>
 
       {/* benefits */}
       <section aria-labelledby="pro-ben-h">
-        <h2 id="pro-ben-h" className="pro-h2 center">Everything a Pro member gets</h2>
+        <h2 id="pro-ben-h" className="pro-h2 center">What you get with Pro</h2>
         <div className="pro-grid">
           {BENEFITS.map(({ icon: Icon, title, text }) => (
             <article className="pro-benefit" key={title}>
@@ -187,18 +187,18 @@ export default function ProPage() {
 
       {/* plans */}
       <section id="plans" className="pro-plans" aria-labelledby="pro-plan-h">
-        <h2 id="pro-plan-h" className="pro-h2 center">Choose your plan</h2>
+        <h2 id="pro-plan-h" className="pro-h2 center">Choose a plan</h2>
         <div className="pro-plan-grid" role="radiogroup" aria-label="Pro plan">
           <button type="button" role="radio" aria-checked={plan === 'monthly'} className={`pro-plan ${plan === 'monthly' ? 'on' : ''}`} onClick={() => setPlan('monthly')}>
             <span className="pro-plan-name">Monthly</span>
             <span className="pro-plan-price">{formatINR(PRO_PLANS.monthly.price, 0)}<small>/month</small></span>
-            <span className="pro-plan-note">Cancel any time by not renewing</span>
+            <span className="pro-plan-note">Pay again only when you want to renew</span>
           </button>
           <button type="button" role="radio" aria-checked={plan === 'yearly'} className={`pro-plan best ${plan === 'yearly' ? 'on' : ''}`} onClick={() => setPlan('yearly')}>
             <span className="pro-plan-flag">Best value · save {formatINR(yearSaving, 0)}</span>
             <span className="pro-plan-name">Yearly</span>
             <span className="pro-plan-price">{formatINR(PRO_PLANS.yearly.price, 0)}<small>/year</small></span>
-            <span className="pro-plan-note">Just {formatINR(perMonthYear, 0)} a month</span>
+            <span className="pro-plan-note">Only {formatINR(perMonthYear, 0)} per month</span>
           </button>
         </div>
         <div className="pro-cta">{cta}</div>
@@ -221,8 +221,8 @@ export default function ProPage() {
       <section className="pro-help">
         <Headset size={20} />
         <div>
-          <b>Questions before you join?</b>
-          <p>Write to <a href={`mailto:${PRO_SUPPORT_EMAIL}`}>{PRO_SUPPORT_EMAIL}</a>. Pro members get priority replies, 24/7.</p>
+          <b>Have a question?</b>
+          <p>Email us at <a href={`mailto:${PRO_SUPPORT_EMAIL}`}>{PRO_SUPPORT_EMAIL}</a>. Pro members get answers first, 24/7.</p>
         </div>
       </section>
     </div>

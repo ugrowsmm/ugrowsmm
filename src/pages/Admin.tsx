@@ -1,8 +1,8 @@
 import { useCallback, useEffect, useState } from 'react'
 import { Link, Navigate } from 'react-router-dom'
 import { canAccessAdmin } from '../lib/admins'
-import { ArrowLeft, CheckCircle2, Clock, Gift, Lock, Percent, RotateCcw, Search, Trash2, Wallet, XCircle } from 'lucide-react'
-import { REFERRAL_PERCENT_DEFAULT, useStore } from '../lib/store'
+import { ArrowLeft, CheckCircle2, Clock, Crown, Gift, Lock, Percent, RotateCcw, Search, Trash2, Wallet, XCircle } from 'lucide-react'
+import { PRO_REFERRAL_PERCENT, REFERRAL_PERCENT_DEFAULT, isProState, referralAvailable, useStore } from '../lib/store'
 import { rpc, apiReady } from '../lib/api'
 import { formatINR, timeAgo, type OrderStatus } from '../lib/data'
 import { InfoBox, Modal, ModalHead, Segmented, StatusBadge } from '../components/ui'
@@ -12,8 +12,8 @@ const ORDER_STATUSES: OrderStatus[] = ['Pending', 'In progress', 'Completed', 'P
 const ORDER_FILTERS = ['All', 'Needs attention', 'Pending', 'In progress', 'Completed', 'Canceled'] as const
 const STUCK_AFTER_HOURS = 6
 type Tab = (typeof TABS)[number]
-type ActType = 'funds' | 'referral' | 'cashback' | 'delete' | 'cutFunds' | 'cutReferral'
-interface AdminUser { email: string; name: string; code: string; refBy: string; percent: number; balance: number; earned: number }
+type ActType = 'funds' | 'referral' | 'cashback' | 'delete' | 'cutFunds' | 'cutReferral' | 'pro'
+interface AdminUser { email: string; name: string; code: string; refBy: string; percent: number; balance: number; earned: number; proUntil: string }
 interface AdminOrder { id: string; email: string; name: string; link: string; qty: number; charge: number; status: OrderStatus; createdAt: string; tag: string }
 interface AdminPayout { key: string; id?: number; localId?: string; email: string; amount: number; method: string; details: string; status: 'Processing' | 'Paid' | 'Rejected'; createdAt: string }
 interface AdminTicket { id: string; email: string; type: string; orderId: string; subject: string; message: string; status: 'Open' | 'Resolved'; createdAt: string; resolvedAt: string }
@@ -57,6 +57,7 @@ export default function Admin() {
   const [kind, setKind] = useState<'paid' | 'unpaid'>('paid')
   const [mode, setMode] = useState<'add' | 'cut'>('add')
   const [pct, setPct] = useState('20')
+  const [proDays, setProDays] = useState('30')
   const [orderFilter, setOrderFilter] = useState<(typeof ORDER_FILTERS)[number]>('All')
   const [orderAct, setOrderAct] = useState<AdminOrder | null>(null)
   const [newStatus, setNewStatus] = useState<OrderStatus>('Completed')
@@ -90,8 +91,8 @@ export default function Admin() {
     )
 
   const users: AdminUser[] = live
-    ? (remote?.users ?? []).map((u: any) => ({ email: String(u.email), name: String(u.name ?? ''), code: String(u.code ?? ''), refBy: String(u.refBy ?? ''), percent: Number(u.percent), balance: Number(u.balance) || 0, earned: Number(u.earned) || 0 }))
-    : [{ email: state.profile.email, name: state.profile.name, code: state.referral.code, refBy: state.refBy, percent: state.codePercents[state.referral.code] ?? REFERRAL_PERCENT_DEFAULT, balance: state.balance, earned: state.referral.earned }]
+    ? (remote?.users ?? []).map((u: any) => ({ email: String(u.email), name: String(u.name ?? ''), code: String(u.code ?? ''), refBy: String(u.refBy ?? ''), percent: Number(u.percent), balance: Number(u.balance) || 0, earned: Number(u.earned) || 0, proUntil: u.proActive ? String(u.proUntil ?? '') : '' }))
+    : [{ email: state.profile.email, name: state.profile.name, code: state.referral.code, refBy: state.refBy, percent: state.codePercents[state.referral.code] ?? (isProState(state) ? PRO_REFERRAL_PERCENT : REFERRAL_PERCENT_DEFAULT), balance: state.balance, earned: state.referral.earned, proUntil: isProState(state) ? state.pro.until : '' }]
   const shown = users.filter((u) => (u.email + u.name + u.code).toLowerCase().includes(q.toLowerCase()))
   const orders: AdminOrder[] = live
     ? (remote?.orders ?? []).map((o: any) => ({ id: String(o.id), email: String(o.email ?? ''), name: String(o.name ?? ''), link: String(o.link ?? ''), qty: Number(o.qty) || 0, charge: Number(o.charge) || 0, status: normOrderStatus(o.status), createdAt: String(o.createdAt ?? ''), tag: o.demo ? 'Demo' : o.bonus ? 'Bonus' : '' }))
@@ -118,8 +119,9 @@ export default function Admin() {
     const a = Number(amount)
     if ((type === 'funds' || type === 'referral' || type === 'cutFunds' || type === 'cutReferral') && !(a > 0)) return toast('Enter a valid amount', undefined, 'error')
     if (!live && type === 'cutFunds' && a > (kind === 'paid' ? state.balance : state.unpaid)) return toast('Amount is more than the current balance', undefined, 'error')
-    if (!live && type === 'cutReferral' && a > state.referral.earned - state.referral.withdrawn) return toast('Amount is more than the available referral balance', undefined, 'error')
+    if (!live && type === 'cutReferral' && a > referralAvailable(state.referral)) return toast('Amount is more than the available referral balance', undefined, 'error')
     if (type === 'cashback' && !(Number(pct) >= 0 && Number(pct) <= 100)) return toast('Percent must be 0–100', undefined, 'error')
+    if (type === 'pro' && !(Number.isInteger(Number(proDays)) && Number(proDays) >= 0 && Number(proDays) <= 36500)) return toast('Enter days from 0 to 36500', undefined, 'error')
     if (live) {
       const { error } =
         type === 'funds' ? await rpc('admin_credit', { p_email: user.email, p_amount: a, p_kind: kind })
@@ -127,6 +129,7 @@ export default function Admin() {
         : type === 'cutFunds' ? await rpc('admin_debit', { p_email: user.email, p_amount: a, p_kind: kind })
         : type === 'cutReferral' ? await rpc('admin_debit', { p_email: user.email, p_amount: a, p_kind: 'referral' })
         : type === 'cashback' ? await rpc('admin_set_cashback', { p_code: user.code, p_percent: Number(pct) })
+        : type === 'pro' ? await rpc('admin_set_pro', { p_email: user.email, p_days: Number(proDays) })
         : await rpc('admin_delete_user', { p_email: user.email })
       if (error) return toast('Failed', error === 'user_not_found' ? 'User not found (admins cannot be deleted here).' : error === 'insufficient' ? 'That is more than the user currently has. Enter a smaller amount.' : error, 'error')
     } else {
@@ -135,9 +138,21 @@ export default function Admin() {
       if (type === 'cutFunds' && isLocal(user.email)) s.adminDebit(kind, a)
       if (type === 'cutReferral' && isLocal(user.email)) s.adminReferralEarning(-a)
       if (type === 'cashback') s.setCashback(user.code, Number(pct))
+      if (type === 'pro' && isLocal(user.email)) s.adminSetPro(Number(proDays))
       if (type === 'delete' && isLocal(user.email)) s.deleteAccount()
     }
-    toast('Done', type === 'delete' ? `${user.email} deleted` : type === 'cutFunds' || type === 'cutReferral' ? 'Amount deducted' : 'Saved')
+    toast('Done', type === 'delete' ? `${user.email} deleted` : type === 'pro' ? (Number(proDays) > 0 ? `Pro added for ${user.email}` : `Pro removed for ${user.email}`) : type === 'cutFunds' || type === 'cutReferral' ? 'Amount deducted' : 'Saved')
+    close()
+    if (live) void load()
+  }
+
+  const resetCashback = async () => {
+    if (!act) return
+    if (live) {
+      const { error } = await rpc('admin_set_cashback', { p_code: act.user.code, p_percent: null })
+      if (error) return toast('Failed', error, 'error')
+    } else s.setCashback(act.user.code, null)
+    toast('Done', 'Back to the default percentage')
     close()
     if (live) void load()
   }
@@ -207,11 +222,12 @@ export default function Admin() {
           {shown.map((u) => (
             <div key={u.email} className="card card-pad adm-user">
               <div className="row"><span className="avatar">{(u.name || u.email).slice(0, 2).toUpperCase()}</span>
-                <div className="grow"><b className="adm-email">{u.email}</b>
-                  <div className="tiny faint">Code {u.code}{u.refBy ? ` · referred by ${u.refBy}` : ''} · {u.percent}% cashback · Wallet {formatINR(u.balance)} · Referral {formatINR(u.earned)}</div></div></div>
+                <div className="grow"><b className="adm-email">{u.email}{u.proUntil ? <span className="pro-tag compact adm-pro-tag"><Crown size={11} fill="currentColor" /> Pro</span> : null}</b>
+                  <div className="tiny faint">{u.proUntil ? `Pro until ${new Date(u.proUntil).toLocaleDateString('en-IN', { day: 'numeric', month: 'short', year: 'numeric' })} · ` : ''}Code {u.code}{u.refBy ? ` · referred by ${u.refBy}` : ''} · {u.percent}% cashback · Wallet {formatINR(u.balance)} · Referral {formatINR(u.earned)}</div></div></div>
               <div className="adm-actions">
                 <button type="button" className="btn btn-soft btn-sm" onClick={() => openAct('funds', u)}><Wallet /> Funds</button>
                 <button type="button" className="btn btn-soft btn-sm" onClick={() => openAct('referral', u)}><Gift /> Referral</button>
+                <button type="button" className="btn btn-soft btn-sm adm-pro-btn" onClick={() => { setProDays('30'); openAct('pro', u) }}><Crown /> Pro</button>
                 <button type="button" className="btn btn-soft btn-sm" onClick={() => { setPct(String(u.percent)); openAct('cashback', u) }}><Percent /> Cashback %</button>
                 <button type="button" className="btn btn-danger btn-sm" onClick={() => openAct('delete', u)}><Trash2 /> Delete</button>
               </div>
@@ -349,7 +365,7 @@ export default function Admin() {
           return (
             <>
               <style>{ADM_SWITCH_CSS}</style>
-              <ModalHead id="adm-t" title={act.type === 'funds' ? 'Wallet funds' : act.type === 'referral' ? 'Referral funds' : act.type === 'cashback' ? 'Affiliate percentage' : 'Delete user'} subtitle={act.user.email} onClose={close} />
+              <ModalHead id="adm-t" title={act.type === 'funds' ? 'Wallet funds' : act.type === 'referral' ? 'Referral funds' : act.type === 'cashback' ? 'Affiliate percentage' : act.type === 'pro' ? 'Pro membership' : 'Delete user'} subtitle={act.user.email} onClose={close} />
               <div className="stack">
                 {money && (
                   <div className="adm-switch" role="tablist" aria-label="Add or cut" data-active={mode}>
@@ -368,15 +384,30 @@ export default function Admin() {
                 {type === 'referral' && <InfoBox>Referral funds are the only balance the user can withdraw.</InfoBox>}
                 {type === 'cutFunds' && <InfoBox warn>Removes the amount from the user’s <b>{kind === 'paid' ? 'paid wallet' : 'unpaid (demo) credit'}</b>. It cannot go below ₹0.</InfoBox>}
                 {type === 'cutReferral' && <InfoBox warn>Removes the amount from the user’s referral / cashback earnings. Only what is still withdrawable can be cut.</InfoBox>}
+                {act.type === 'pro' && (
+                  <>
+                    <div className="adm-pro-chips" role="group" aria-label="Pro duration">
+                      {[['30', '30 days'], ['90', '90 days'], ['365', '1 year'], ['36500', 'Lifetime']].map(([d, l]) => (
+                        <button key={d} type="button" className={`chip ${proDays === d ? 'active' : ''}`} onClick={() => setProDays(d)}>{l}</button>
+                      ))}
+                    </div>
+                    <input className="input" type="number" inputMode="numeric" placeholder="Days of Pro (0 removes Pro)" value={proDays} onChange={(e) => setProDays(e.target.value)} />
+                    <InfoBox>
+                      {act.user.proUntil ? <>Already Pro until <b>{new Date(act.user.proUntil).toLocaleDateString('en-IN')}</b>. Days are added on top. </> : null}
+                      Free Pro for any member: no payment is taken. Enter <b>0</b> to remove Pro. Their cashback % stays whatever you set in <b>Cashback %</b>; without a custom value Pro earns {PRO_REFERRAL_PERCENT}%.
+                    </InfoBox>
+                  </>
+                )}
                 {act.type === 'cashback' && (
                   <>
                     <input className="input" type="number" inputMode="decimal" placeholder="Percent" value={pct} onChange={(e) => setPct(e.target.value)} />
-                    <InfoBox>Applies to code <b>{act.user.code}</b> from the next top-up of anyone who joins with it.</InfoBox>
+                    <InfoBox>Applies to code <b>{act.user.code}</b> from the next top-up of anyone who joins with it. Normal members earn {REFERRAL_PERCENT_DEFAULT}% and Pro members {PRO_REFERRAL_PERCENT}% unless you set a custom value here.</InfoBox>
+                    <button className="btn btn-ghost btn-block" type="button" onClick={resetCashback}>Use default percentage</button>
                   </>
                 )}
                 {act.type === 'delete' && <InfoBox warn>This removes the account and cannot be undone.</InfoBox>}
-                <button className={`btn ${act.type === 'delete' || cut ? 'btn-danger' : 'btn-primary'} btn-block`} type="button" onClick={run}>
-                  {act.type === 'delete' ? 'Delete user' : cut ? 'Deduct' : money ? 'Add' : 'Save'}
+                <button className={`btn ${act.type === 'delete' || cut || (act.type === 'pro' && Number(proDays) === 0) ? 'btn-danger' : 'btn-primary'} btn-block`} type="button" onClick={run}>
+                  {act.type === 'delete' ? 'Delete user' : cut ? 'Deduct' : money ? 'Add' : act.type === 'pro' ? (Number(proDays) === 0 ? 'Remove Pro' : 'Make Pro member') : 'Save'}
                 </button>
               </div>
             </>

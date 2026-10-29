@@ -62,6 +62,9 @@ create table if not exists public.profiles (
   cashback_percent numeric,
   created_at       timestamptz not null default now()
 );
+-- Pro membership: active while pro_until is in the future. pro_plan: monthly | yearly | admin (free, given by an admin)
+alter table public.profiles add column if not exists pro_until timestamptz;
+alter table public.profiles add column if not exists pro_plan  text;
 
 -- every rupee that moves. kind: paid (spendable), unpaid (admin demo credit), referral (withdrawable earnings)
 create table if not exists public.ledger (
@@ -69,7 +72,7 @@ create table if not exists public.ledger (
   user_id    uuid not null references public.profiles(id) on delete cascade,
   amount     numeric(12,2) not null,
   kind       text not null check (kind in ('paid','unpaid','referral')),
-  type       text not null check (type in ('deposit','order','refund','referral','adjustment')),
+  type       text not null check (type in ('deposit','order','refund','referral','adjustment','subscription')),
   note       text not null default '',
   ref        text,
   created_at timestamptz not null default now()
@@ -189,7 +192,8 @@ begin
   if ref_code is not null then
     select * into referrer from public.profiles where code = ref_code;
     if found and referrer.id <> uid then
-      pct := coalesce(referrer.cashback_percent, 10);
+      -- an admin-set percent wins; otherwise Pro members earn 30% and everyone else 10%
+      pct := coalesce(referrer.cashback_percent, case when referrer.pro_until > now() then 30 else 10 end);
       reward := round(amt * pct / 100, 2);
       if reward > 0 then
         insert into public.ledger(user_id, amount, kind, type, note, ref)
@@ -206,19 +210,22 @@ end $$;
 -- ---------- functions the logged-in user can call ----------
 create or replace function public.get_account() returns jsonb
 language plpgsql stable security definer set search_path = public as $$
-declare uid uuid := auth.uid(); p public.profiles; w record; wd numeric;
+declare uid uuid := auth.uid(); p public.profiles; w record; wd numeric; sp numeric;
 begin
   if uid is null then raise exception 'auth'; end if;
   select * into p from public.profiles where id = uid;
   if not found then raise exception 'auth'; end if;
   select * into w from public.wallet_of(uid);
   select coalesce(sum(amount), 0) into wd from public.withdrawals where user_id = uid and status <> 'Rejected';
+  -- referral funds already spent on orders (wallet_of().earned is net of these, so add them back for the gross figure)
+  select coalesce(-sum(amount), 0) into sp from public.ledger where user_id = uid and kind = 'referral' and type = 'order';
   return jsonb_build_object(
     'profile', jsonb_build_object('email', p.email, 'name', p.name, 'code', p.code, 'refBy', coalesce(p.ref_by, ''), 'isAdmin', p.is_admin),
     'balance', w.paid,
     'unpaid', w.unpaid,
-    'referral', jsonb_build_object('earned', w.earned, 'withdrawn', wd),
-    'percent', coalesce(p.cashback_percent, 10),
+    'referral', jsonb_build_object('earned', w.earned + sp, 'withdrawn', wd, 'spent', sp),
+    'percent', coalesce(p.cashback_percent, case when p.pro_until > now() then 30 else 10 end),
+    'pro', jsonb_build_object('active', coalesce(p.pro_until > now(), false), 'until', coalesce(p.pro_until::text, ''), 'plan', coalesce(p.pro_plan, '')),
     'orders', coalesce((
       select jsonb_agg(jsonb_build_object(
         'id', o.id::text, 'serviceId', o.service_id, 'serviceName', o.service_name, 'platform', o.platform,
@@ -231,9 +238,9 @@ begin
       from (select * from public.orders where user_id = uid order by created_at desc limit 200) o), '[]'::jsonb),
     'transactions', coalesce((
       select jsonb_agg(jsonb_build_object(
-        'id', 'TX-' || l.id, 'type', l.type, 'label', l.note, 'amount', abs(l.amount), 'createdAt', l.created_at,
+        'id', 'TX-' || l.id, 'type', case when l.type = 'subscription' then 'order' else l.type end, 'label', l.note, 'amount', abs(l.amount), 'createdAt', l.created_at,
         'method', case when l.type = 'deposit' then 'UPI' end) order by l.created_at desc)
-      from (select * from public.ledger where user_id = uid and kind <> 'referral' order by created_at desc limit 100) l), '[]'::jsonb),
+      from (select * from public.ledger where user_id = uid and (kind <> 'referral' or type = 'order') order by created_at desc limit 100) l), '[]'::jsonb),
     'withdrawals', coalesce((
       select jsonb_agg(jsonb_build_object('id', 'WD-' || x.id, 'amount', x.amount, 'method', x.method, 'details', x.details,
         'status', x.status, 'createdAt', x.created_at) order by x.created_at desc)
@@ -294,7 +301,8 @@ begin
   return jsonb_build_object(
     'users', coalesce((
       select jsonb_agg(jsonb_build_object('email', p.email, 'name', p.name, 'code', p.code, 'refBy', coalesce(p.ref_by, ''),
-        'percent', coalesce(p.cashback_percent, 10), 'balance', w.paid, 'unpaid', w.unpaid, 'earned', w.earned, 'joined', p.created_at)
+        'percent', coalesce(p.cashback_percent, case when p.pro_until > now() then 30 else 10 end),
+        'proActive', coalesce(p.pro_until > now(), false), 'proUntil', p.pro_until, 'balance', w.paid, 'unpaid', w.unpaid, 'earned', w.earned, 'joined', p.created_at)
         order by p.created_at desc)
       from (select p2.* from public.profiles p2 join auth.users u on u.id = p2.id
             where u.email_confirmed_at is not null order by p2.created_at desc limit 500) p
@@ -331,7 +339,8 @@ create or replace function public.admin_set_cashback(p_code text, p_percent nume
 language plpgsql security definer set search_path = public as $$
 begin
   if not public.is_admin() then raise exception 'forbidden'; end if;
-  if p_percent is null or p_percent < 0 or p_percent > 100 then raise exception 'invalid'; end if;
+  -- null = back to the default (10%, or 30% while the member is Pro)
+  if p_percent is not null and (p_percent < 0 or p_percent > 100) then raise exception 'invalid'; end if;
   update public.profiles set cashback_percent = p_percent where code = upper(p_code);
 end $$;
 
@@ -393,7 +402,7 @@ end $$;
 -- Existing databases: this block is safe to run again. It widens the ledger "type" list to allow admin deductions.
 alter table public.ledger drop constraint if exists ledger_type_check;
 alter table public.ledger add constraint ledger_type_check
-  check (type in ('deposit','order','refund','referral','adjustment'));
+  check (type in ('deposit','order','refund','referral','adjustment','subscription'));
 
 -- p_kind: paid (spendable wallet), unpaid (demo credit) or referral (cashback / referral earnings).
 -- A deduction can never take a balance below zero (referral: below what is still withdrawable).
@@ -435,21 +444,87 @@ begin
   delete from auth.users where id = uid;
 end $$;
 
+-- ---------- Pro membership ----------
+create or replace function public.pro_active(uid uuid) returns boolean
+language sql stable security definer set search_path = public as $$
+  select coalesce((select pro_until > now() from public.profiles where id = uid), false)
+$$;
+
+-- Pro paid from the wallet. Prices here must match PRO_PRICE_MONTH / PRO_PRICE_YEAR in src/lib/config.ts.
+-- Buying while already Pro adds the days on top of the current end date.
+create or replace function public.buy_pro(p_plan text) returns void
+language plpgsql security definer set search_path = public as $$
+declare uid uuid := auth.uid(); v_price numeric; v_days int; v_paid numeric; v_cur timestamptz;
+begin
+  if uid is null then raise exception 'auth'; end if;
+  if p_plan = 'monthly' then v_price := 1299; v_days := 30;
+  elsif p_plan = 'yearly' then v_price := 10999; v_days := 365;
+  else raise exception 'invalid'; end if;
+  perform pg_advisory_xact_lock(hashtext(uid::text));
+  select paid into v_paid from public.wallet_of(uid);
+  if v_paid < v_price then raise exception 'insufficient'; end if;
+  select pro_until into v_cur from public.profiles where id = uid;
+  insert into public.ledger(user_id, amount, kind, type, note)
+  values (uid, -v_price, 'paid', 'subscription', 'Pro membership · ' || initcap(p_plan));
+  update public.profiles
+     set pro_until = greatest(coalesce(v_cur, now()), now()) + make_interval(days => v_days), pro_plan = p_plan
+   where id = uid;
+end $$;
+
+-- Admin: give Pro for free (p_days > 0 adds days) or remove it (p_days = 0). Does not touch cashback_percent.
+create or replace function public.admin_set_pro(p_email text, p_days int) returns void
+language plpgsql security definer set search_path = public as $$
+declare uid uuid; v_cur timestamptz;
+begin
+  if not public.is_admin() then raise exception 'forbidden'; end if;
+  if p_days is null or p_days < 0 or p_days > 36500 then raise exception 'invalid'; end if;
+  select id, pro_until into uid, v_cur from public.profiles where email = public.canon_email(p_email);
+  if uid is null then raise exception 'user_not_found'; end if;
+  if p_days = 0 then
+    update public.profiles set pro_until = null, pro_plan = null where id = uid;
+  else
+    update public.profiles
+       set pro_until = greatest(coalesce(v_cur, now()), now()) + make_interval(days => p_days), pro_plan = 'admin'
+     where id = uid;
+  end if;
+end $$;
+
+-- For the order step (server side, later): take money for an order from the wallet ('paid') or from referral funds ('referral').
+-- Locked and checked, so a balance can never go below zero. The order function must also charge the Pro price when pro_active(uid):
+-- rate * 0.70 (PRO_DISCOUNT_PERCENT in src/lib/config.ts).
+create or replace function public.charge_funds(uid uuid, amt numeric, source text, note text, ref_key text) returns void
+language plpgsql security definer set search_path = public as $$
+declare w record; avail numeric;
+begin
+  if amt is null or amt <= 0 or source not in ('paid','referral') then raise exception 'invalid'; end if;
+  perform pg_advisory_xact_lock(hashtext(uid::text));
+  select * into w from public.wallet_of(uid);
+  if source = 'paid' then avail := w.paid;
+  else avail := w.earned - coalesce((select sum(amount) from public.withdrawals where user_id = uid and status <> 'Rejected'), 0);
+  end if;
+  if round(amt, 2) > avail then raise exception 'insufficient'; end if;
+  insert into public.ledger(user_id, amount, kind, type, note, ref)
+  values (uid, -round(amt, 2), source, 'order', note, ref_key);
+end $$;
+
 -- ---------- who may call what ----------
 revoke all on function public.canon_email(text), public.guard_email(), public.release_email(), public.handle_new_user(),
-  public.is_admin(), public.wallet_of(uuid), public.credit_deposit(uuid, numeric, text) from public, anon, authenticated;
-grant execute on function public.credit_deposit(uuid, numeric, text) to service_role;
+  public.is_admin(), public.wallet_of(uuid), public.credit_deposit(uuid, numeric, text),
+  public.pro_active(uuid), public.charge_funds(uuid, numeric, text, text, text) from public, anon, authenticated;
+grant execute on function public.credit_deposit(uuid, numeric, text), public.charge_funds(uuid, numeric, text, text, text) to service_role;
 
 revoke all on function public.get_account(), public.update_profile(text), public.request_withdrawal(numeric, text, text),
   public.create_ticket(text, text, text, text), public.admin_overview(), public.admin_credit(text, numeric, text),
   public.admin_set_cashback(text, numeric), public.admin_set_order_status(bigint, text, boolean),
   public.admin_set_withdrawal_status(bigint, text), public.admin_set_ticket_status(text, text),
-  public.admin_delete_user(text), public.admin_debit(text, numeric, text), public.delete_my_account() from public, anon;
+  public.admin_delete_user(text), public.admin_debit(text, numeric, text), public.delete_my_account(),
+  public.buy_pro(text), public.admin_set_pro(text, int) from public, anon;
 grant execute on function public.get_account(), public.update_profile(text), public.request_withdrawal(numeric, text, text),
   public.create_ticket(text, text, text, text), public.admin_overview(), public.admin_credit(text, numeric, text),
   public.admin_set_cashback(text, numeric), public.admin_set_order_status(bigint, text, boolean),
   public.admin_set_withdrawal_status(bigint, text), public.admin_set_ticket_status(text, text),
-  public.admin_delete_user(text), public.admin_debit(text, numeric, text), public.delete_my_account() to authenticated;
+  public.admin_delete_user(text), public.admin_debit(text, numeric, text), public.delete_my_account(),
+  public.buy_pro(text), public.admin_set_pro(text, int) to authenticated;
 
 -- ---------- after YOU have signed up and verified your email, make yourself admin (put your own email in) ----------
 -- update public.profiles set is_admin = true where email = 'yourname@gmail.com';

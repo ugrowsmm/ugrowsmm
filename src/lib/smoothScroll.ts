@@ -2,6 +2,9 @@ import Lenis from 'lenis'
 
 let lenis: Lenis | null = null
 
+// Long, soft tail (expo-out): the page glides in and settles gently instead of stopping abruptly.
+const easeOutExpo = (t: number) => (t >= 1 ? 1 : 1 - Math.pow(2, -10 * t))
+
 export function initSmoothScroll() {
   if (lenis || typeof window === 'undefined') return () => {}
 
@@ -11,8 +14,9 @@ export function initSmoothScroll() {
   if (reduced || !finePointer) return () => {}
 
   const instance = new Lenis({
-    lerp: 0.1,
-    wheelMultiplier: 1,
+    duration: 1.25, // how long one wheel "push" glides
+    easing: easeOutExpo,
+    wheelMultiplier: 0.85, // slightly slower, more deliberate scroll
     smoothWheel: true,
     syncTouch: false,
     autoRaf: true,
@@ -39,17 +43,19 @@ export function initSmoothScroll() {
 
 export function scrollToTop(immediate = true) {
   if (lenis) {
-    lenis.scrollTo(0, immediate ? { immediate: true, force: true } : { duration: 1.1 })
+    lenis.scrollTo(0, immediate ? { immediate: true, force: true } : { duration: 1.4 })
     return
   }
-  window.scrollTo({ top: 0, behavior: immediate ? 'auto' : 'smooth' })
+  // 'instant' on purpose: with CSS scroll-behavior:smooth, 'auto' would animate the jump to the top
+  // after every page change (that looked like a glitch on phones).
+  window.scrollTo({ top: 0, behavior: immediate ? ('instant' as ScrollBehavior) : 'smooth' })
 }
 
 // Section anchors carry `scroll-margin-top: 96px`, which Lenis also honours, so
 // the offset is applied exactly once and the sticky headers never cover a heading.
 export function scrollToSection(target: string | HTMLElement) {
   if (lenis) {
-    lenis.scrollTo(target, { duration: 1.1 })
+    lenis.scrollTo(target, { duration: 1.4, easing: easeOutExpo })
     return
   }
   const element =
@@ -66,7 +72,7 @@ export function scrollToSection(target: string | HTMLElement) {
  */
 export function scrollToElement(element: HTMLElement, offset = 84) {
   if (lenis) {
-    lenis.scrollTo(element, { offset: -offset, duration: 0.9 })
+    lenis.scrollTo(element, { offset: -offset, duration: 1.1, easing: easeOutExpo })
     return
   }
   const top = element.getBoundingClientRect().top + window.scrollY - offset

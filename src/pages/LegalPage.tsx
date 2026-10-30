@@ -246,7 +246,7 @@ export default function LegalPage({ slug }: { slug: LegalSlug }) {
             <span>·</span>
             <span>{readingTime} min read</span>
             <span>·</span>
-            <span>Applies to ugrowsmm.com and the UGrowSMM app</span>
+            <span>Applies to ugrowsmm.in and the UGrowSMM app</span>
           </div>
         </div>
 

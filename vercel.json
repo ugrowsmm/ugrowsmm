@@ -3,7 +3,6 @@
     {
       "src": "/(.*)",
       "headers": {
-        "X-Robots-Tag": "noindex, nofollow, noarchive, nosnippet, noimageindex",
         "X-Frame-Options": "DENY",
         "X-Content-Type-Options": "nosniff",
         "Referrer-Policy": "strict-origin-when-cross-origin",
@@ -35,12 +34,12 @@
       "continue": true
     },
     {
-      "src": "/(?!robots\\.txt$|blocked\\.html$|icons/)(.*)",
+      "src": "/(?!robots\\.txt$|sitemap\\.xml$|og-image\\.png$|blocked\\.html$|icons/)(.*)",
       "has": [
         {
           "type": "header",
           "key": "user-agent",
-          "value": ".*(bot|Bot|BOT|crawl|Crawl|spider|Spider|scrap|Scrap|curl|Wget|wget|python|Python|Go-http|libwww|[Hh]eadless|PhantomJS|[Ss]elenium|[Pp]uppeteer|[Pp]laywright|axios|node-fetch|[Hh]ttp[Cc]lient|Postman|Java/).*"
+          "value": ".*(AhrefsBot|SemrushBot|MJ12bot|DotBot|PetalBot|BLEXBot|DataForSeoBot|serpstatbot|Barkrowler|MegaIndex|ImagesiftBot|Diffbot|GPTBot|ChatGPT|CCBot|ClaudeBot|anthropic-ai|Bytespider|Amazonbot|PerplexityBot|crawl|Crawl|spider|Spider|scrap|Scrap|curl|Wget|wget|python|Python|Go-http|libwww|[Hh]eadless|PhantomJS|[Ss]elenium|[Pp]uppeteer|[Pp]laywright|axios|node-fetch|[Hh]ttp[Cc]lient|Postman|Java/).*"
         }
       ],
       "status": 403,

@@ -27,6 +27,20 @@
       "continue": true
     },
     {
+      "src": "/pay/(.*)",
+      "headers": {
+        "Cache-Control": "public, max-age=604800"
+      },
+      "continue": true
+    },
+    {
+      "src": "/og-image.png",
+      "headers": {
+        "Cache-Control": "public, max-age=86400"
+      },
+      "continue": true
+    },
+    {
       "src": "/sw.js",
       "headers": {
         "Cache-Control": "no-cache"

@@ -346,9 +346,26 @@ const describe = (s: Service): string => {
   ].filter(Boolean).join(' ')
 }
 
-/** What users see: provider cost run through the smart markup (sellRate). */
-export const SERVICES: Service[] = SOURCE.map((s) => ({
+/**
+ * One home per kind of service. The provider splits the same thing into several groups
+ * ("Comments", "Custom Comments", "Comments Packages", "Live Views Packages" ...). Users should find
+ * all of it in ONE place, so those groups are merged here. The name of each service and its
+ * "/ package" label still tell the variants apart. Country-wise groups are left as they are.
+ */
+const mergedCategory = (s: { category: string; ty?: string }): string => {
+  const c = s.category
+  if (isCountryCategory(c)) return c
+  if (c === 'Custom Comments') return s.ty === 'Reviews' ? 'Reviews' : 'Comments'
+  return c.endsWith(' Packages') ? c.slice(0, -' Packages'.length) : c
+}
+
+/**
+ * What users see: provider cost run through the smart markup (sellRate).
+ * Services with no price (rate 0) are dropped completely, so nothing can be ordered for free.
+ */
+export const SERVICES: Service[] = SOURCE.filter((s) => Number.isFinite(s.rate) && s.rate > 0).map((s) => ({
   ...s,
+  category: mergedCategory(s),
   rate: sellRate(s.rate),
   description: describe(s),
 }))
@@ -361,7 +378,7 @@ export const priceOf = (s: Pick<Service, 'mode' | 'rate'>, quantity: number) =>
 /** Free-views bonus uses the curated reel-views service, or the cheapest Instagram views service of a synced catalog. */
 export const BONUS_SERVICE_ID =
   SERVICES.find((x) => x.id === 'ig-reel-views')?.id ??
-  [...SERVICES].filter((x) => x.platform === 'instagram' && x.category === 'Views' && !x.country).sort((a, b) => a.rate - b.rate)[0]?.id ??
+  [...SERVICES].filter((x) => x.platform === 'instagram' && x.category === 'Views' && x.mode !== 'package' && !x.country).sort((a, b) => a.rate - b.rate)[0]?.id ??
   'ig-reel-views'
 
 export const CHART_POINTS = [420, 380, 510, 470, 620, 590, 720, 680, 810, 760, 920, 860, 1040, 1180]

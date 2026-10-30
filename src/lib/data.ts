@@ -360,11 +360,68 @@ const mergedCategory = (s: { category: string; ty?: string }): string => {
 }
 
 /**
+ * Same kind of service at the same cost = one entry. When the provider lists several look-alikes
+ * (same platform, same group, same type, same price), only the BEST one is kept:
+ *   1. higher grade (Pro > Premium > Standard)   2. longer refill cover (lifetime > 30-day > none)
+ *   3. non-drop > low drop > drop                4. plain link + quantity form over a "paste a list" one
+ *   5. bigger maximum                            6. smaller minimum
+ * Flat-price packages, custom comments, polls, notes and auto-boost are never merged (each is its own thing).
+ */
+const refillDays = (name: string) =>
+  /lifetime refill/i.test(name) ? 365 : Number(name.match(/(\d{1,3})-day refill/i)?.[1] ?? 0)
+const GRADE_RANK: Record<string, number> = { Standard: 1, Premium: 2, Pro: 3 }
+const betterOf = (a: Service, b: Service): boolean => {
+  const score = (x: Service) => [
+    GRADE_RANK[x.quality] ?? 1,
+    refillDays(x.name),
+    /non-drop/i.test(x.name) ? 2 : /low drop/i.test(x.name) ? 1 : 0,
+    x.mode === undefined ? 1 : 0,
+    x.max,
+    -x.min,
+  ]
+  const sa = score(a)
+  const sb = score(b)
+  for (let i = 0; i < sa.length; i++) if (sa[i] !== sb[i]) return sa[i] > sb[i]
+  return false
+}
+const dropDuplicates = <T extends Service>(list: T[]): T[] => {
+  const best = new Map<string, T>()
+  for (const x of list) {
+    if (x.mode === 'package') continue
+    const mode = x.mode === 'list' ? '' : (x.mode ?? '')
+    const key = [x.platform, mergedCategory(x), x.country ?? '', mode, x.ty ?? '', x.name.split(' · ')[0], x.rate].join('|')
+    const cur = best.get(key)
+    if (!cur || betterOf(x, cur)) best.set(key, x)
+  }
+  const keep = new Set(best.values())
+  return list.filter((x) => x.mode === 'package' || keep.has(x))
+}
+
+/**
+ * Names are shown to customers, so provider leftovers are removed: internal ids like "· #9800",
+ * and huge raw limits like "up to 2147483647" become "up to 2.1B".
+ */
+const shortNumber = (n: number) => {
+  const fmt = (v: number, u: string) => `${Number(v.toFixed(1))}${u}`
+  return n >= 1e9 ? fmt(n / 1e9, 'B') : n >= 1e6 ? fmt(n / 1e6, 'M') : n >= 1e3 ? fmt(n / 1e3, 'K') : String(n)
+}
+const friendlyName = (name: string) =>
+  name
+    .replace(/\s*·\s*#\d+\b/g, '')
+    .replace(/\s+#\d+\s*$/, '')
+    .replace(/\b(up to|min)\s+(\d{6,})\b/gi, (_m, w: string, num: string) => `${w} ${shortNumber(Number(num))}`)
+    .trim()
+
+/**
  * What users see: provider cost run through the smart markup (sellRate).
  * Services with no price (rate 0) are dropped completely, so nothing can be ordered for free.
+ * Look-alike duplicates are reduced to the best one (see dropDuplicates).
  */
-export const SERVICES: Service[] = SOURCE.filter((s) => Number.isFinite(s.rate) && s.rate > 0).map((s) => ({
+export const SERVICES: Service[] = dropDuplicates(
+  SOURCE.filter((s) => Number.isFinite(s.rate) && s.rate > 0) as Service[],
+).map((s) => ({
   ...s,
+  name: friendlyName(s.name),
   category: mergedCategory(s),
   rate: sellRate(s.rate),
   description: describe(s),

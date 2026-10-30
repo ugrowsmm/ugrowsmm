@@ -192,7 +192,7 @@ export const TIERS: Record<Quality, { grade: string; headline: string; blurb: st
 
 export const TIER_ORDER: Quality[] = ['Standard', 'Premium', 'Pro']
 
-/** Provider cost per 1,000 in INR (public rates). The price users see is MARKUP x this. */
+/** Provider cost per 1,000 in INR (public rates). The price users see is sellRate(cost), see the smart markup below. */
 const svc = (
   id: string, platform: Platform, category: string, name: string, rate: number, min: number, max: number,
   avgTime: string, quality: Quality, description: string, badge?: string,
@@ -248,7 +248,50 @@ const CURATED: Service[] = [
     "Grow your channel's headcount quickly so new visitors trust it at first glance."),
 ]
 
-export const MARKUP = 5
+/**
+ * Smart markup. Input = provider cost per 1,000 in INR, output = the price users see.
+ *
+ *  under ₹1       -> lifted close to ₹1 (₹0.80 - ₹0.99), BUT never less than 5x the cost (MIN_PAISE_MULTIPLIER).
+ *                    So very cheap services land near ₹1, and once 5x goes past ₹1 the price simply follows 5x.
+ *                    Anchors (cost -> price):  0.049 -> 0.80,  0.19 -> 0.95.  Then the 5x floor applies: 0.20 -> 1.00,  0.50 -> 2.50,  0.99 -> 4.95.
+ *  ₹1   - ₹10     -> +200%  (x3)      e.g. 10    -> 30
+ *  ₹10  - ₹100    -> +150%  (x2.5)
+ *  ₹100 - ₹1,000  -> +100%  (x2)
+ *  ₹1,000 - ₹10,000 -> +70% (x1.7)
+ *  above ₹10,000  -> +50%   (x1.5)    e.g. 10,001 -> 15,001.50
+ * Change the numbers below to change the pricing everywhere on the site.
+ */
+const CHEAP_ANCHORS: ReadonlyArray<readonly [cost: number, price: number]> = [
+  [0.049, 0.8],
+  [0.2, 0.95],
+  [0.99, 0.99],
+]
+const MIN_PAISE_MULTIPLIER = 5
+const MARKUP_TIERS: ReadonlyArray<readonly [upTo: number, multiplier: number]> = [
+  [10, 3],
+  [100, 2.5],
+  [1000, 2],
+  [10000, 1.7],
+  [Infinity, 1.5],
+]
+export const sellRate = (cost: number): number => {
+  if (!Number.isFinite(cost) || cost <= 0) return 0
+  if (cost < 1) {
+    const a = CHEAP_ANCHORS
+    if (cost <= a[0][0]) return Math.max(a[0][1], Math.round(cost * MIN_PAISE_MULTIPLIER * 100) / 100)
+    for (let i = 1; i < a.length; i++) {
+      if (cost <= a[i][0]) {
+        const [c0, p0] = a[i - 1]
+        const [c1, p1] = a[i]
+        const t = (Math.log(cost) - Math.log(c0)) / (Math.log(c1) - Math.log(c0))
+        return Math.max(Math.round((p0 + t * (p1 - p0)) * 100) / 100, Math.round(cost * MIN_PAISE_MULTIPLIER * 100) / 100)
+      }
+    }
+    return Math.max(a[a.length - 1][1], Math.round(cost * MIN_PAISE_MULTIPLIER * 100) / 100)
+  }
+  const tier = MARKUP_TIERS.find(([upTo]) => cost <= upTo) ?? MARKUP_TIERS[MARKUP_TIERS.length - 1]
+  return Math.round(cost * tier[1] * 100) / 100
+}
 
 /** Referral welcome bonus: free Instagram views on the first qualifying top-up. */
 export const BONUS_VIEWS = 50000
@@ -303,10 +346,10 @@ const describe = (s: Service): string => {
   ].filter(Boolean).join(' ')
 }
 
-/** What users see: provider cost x MARKUP (5x). */
+/** What users see: provider cost run through the smart markup (sellRate). */
 export const SERVICES: Service[] = SOURCE.map((s) => ({
   ...s,
-  rate: Math.round(s.rate * MARKUP * 100) / 100,
+  rate: sellRate(s.rate),
   description: describe(s),
 }))
 

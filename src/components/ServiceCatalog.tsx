@@ -185,6 +185,7 @@ export default function ServiceCatalog({ variant }: { variant: 'services' | 'ord
             platform={g.p}
             list={g.list}
             from={g.from}
+            sort={sort}
             tier={tier}
             open={searching || openPlatform === g.p}
             forced={searching}
@@ -214,6 +215,7 @@ function PlatformAccordion({
   list,
   from,
   tier,
+  sort,
   open,
   forced,
   onToggle,
@@ -223,6 +225,7 @@ function PlatformAccordion({
   list: Service[]
   from: number
   tier: Quality
+  sort: Sort
   open: boolean
   forced: boolean
   onToggle: () => void
@@ -261,8 +264,13 @@ function PlatformAccordion({
     return Array.from(m.entries()).sort((a, b) => categoryRank(a[0]) - categoryRank(b[0]))
   }, [list])
 
+  // the "All" chip always lists the cheapest first (unless the visitor picked "high to low"); the other chips keep their own order
+  const allByPrice = useMemo(
+    () => (sort === 'price-desc' ? list : [...list].sort((a, b) => a.rate - b.rate)),
+    [list, sort],
+  )
   const filtered =
-    cat === 'All' ? list : list.filter((s) => s.category === cat || (isCountryCategory(cat) && s.country !== undefined && cat.endsWith(s.country)))
+    cat === 'All' ? allByPrice : list.filter((s) => s.category === cat || (isCountryCategory(cat) && s.country !== undefined && cat.endsWith(s.country)))
   const visible = filtered.slice(0, limit)
 
   return (

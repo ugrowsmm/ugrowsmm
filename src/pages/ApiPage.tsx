@@ -38,7 +38,7 @@ export default function ApiPage() {
   const display = show ? state.apiKey : masked
 
   const snippets: Record<string, string> = {
-    cURL: `curl -X POST https://api.ugrowsmm.com/v2/order \\
+    cURL: `curl -X POST https://api.ugrowsmm.in/v2/order \\
   -H "Authorization: Bearer ${state.apiKey}" \\
   -H "Content-Type: application/json" \\
   -d '{
@@ -46,7 +46,7 @@ export default function ApiPage() {
     "link": "https://instagram.com/your.profile",
     "quantity": 1000
   }'`,
-    JavaScript: `const res = await fetch('https://api.ugrowsmm.com/v2/order', {
+    JavaScript: `const res = await fetch('https://api.ugrowsmm.in/v2/order', {
   method: 'POST',
   headers: {
     Authorization: 'Bearer ${state.apiKey}',
@@ -62,7 +62,7 @@ export default function ApiPage() {
 const order = await res.json()
 console.log(order.id, order.status)`,
     PHP: `<?php
-$ch = curl_init('https://api.ugrowsmm.com/v2/order');
+$ch = curl_init('https://api.ugrowsmm.in/v2/order');
 
 curl_setopt_array($ch, [
   CURLOPT_POST => true,
@@ -302,7 +302,7 @@ echo $order['id'];`,
             <div>
               <div className="card-title">Endpoints</div>
               <div className="tiny faint" style={{ marginTop: 3 }}>
-                Base URL · api.ugrowsmm.com
+                Base URL · api.ugrowsmm.in
               </div>
             </div>
             <Server size={15} style={{ color: '#5b6472' }} />

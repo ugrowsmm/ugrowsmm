@@ -36,11 +36,17 @@ export function ScrollProgress() {
     const onScroll = () => {
       if (!raf) raf = requestAnimationFrame(paint)
     }
-    const remeasure = () => {
+    let mraf = 0
+    const doMeasure = () => {
+      mraf = 0
       measure()
       paint()
     }
-    remeasure()
+    const remeasure = () => {
+      if (!mraf) mraf = requestAnimationFrame(doMeasure)
+    }
+    measure()
+    paint()
     const t = window.setTimeout(remeasure, 350) // after the lazy page has painted
     const ro = new ResizeObserver(remeasure)
     ro.observe(document.body)
@@ -49,6 +55,7 @@ export function ScrollProgress() {
     return () => {
       window.clearTimeout(t)
       cancelAnimationFrame(raf)
+      cancelAnimationFrame(mraf)
       ro.disconnect()
       window.removeEventListener('scroll', onScroll)
       window.removeEventListener('resize', remeasure)
@@ -182,11 +189,22 @@ export function RevealManager() {
     )
 
     let raf = 0
+    // Only the parts of the page that were just added are scanned (not the whole document every time),
+    // so long lists that load more rows stay cheap.
+    const pending = new Set<Element>()
     const scan = () => {
       raf = 0
-      const found = Array.from(document.querySelectorAll<HTMLElement>(ALL)).filter(
-        (el) => !el.hasAttribute('data-rv'),
-      )
+      const roots = Array.from(pending).filter((r) => r.isConnected)
+      pending.clear()
+      const seen = new Set<HTMLElement>()
+      for (const r of roots) {
+        if (r.matches(ALL)) seen.add(r as HTMLElement)
+        r.querySelectorAll<HTMLElement>(ALL).forEach((el) => seen.add(el))
+      }
+      // document order, so a parent is always tagged before the blocks inside it
+      const found = Array.from(seen)
+        .filter((el) => !el.hasAttribute('data-rv'))
+        .sort((a, b) => (a.compareDocumentPosition(b) & Node.DOCUMENT_POSITION_FOLLOWING ? -1 : 1))
       if (!found.length) return
 
       // 1) reads only
@@ -218,16 +236,27 @@ export function RevealManager() {
     }
 
     const mo = new MutationObserver((mutations) => {
-      if (mutations.some((m) => m.addedNodes.length)) schedule()
+      let added = false
+      for (const m of mutations) {
+        m.addedNodes.forEach((n) => {
+          if (n.nodeType === 1) {
+            pending.add(n as Element)
+            added = true
+          }
+        })
+      }
+      if (added) schedule()
     })
     const rootEl = document.getElementById('root') ?? document.body
     mo.observe(rootEl, { childList: true, subtree: true })
+    pending.add(rootEl)
     schedule()
 
     return () => {
       mo.disconnect()
       io.disconnect()
       if (raf) cancelAnimationFrame(raf)
+      pending.clear()
       root.classList.remove('rv-on')
       document.querySelectorAll<HTMLElement>('[data-rv]').forEach((el) => {
         el.removeAttribute('data-rv')
